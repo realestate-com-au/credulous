@@ -15,8 +15,8 @@ func TestEncode(t *testing.T) {
 		pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXg9Vmhy9YSB8BcN3yHgQjdX9lN3j2KRpv7kVDXSiIana2WbKP7IiTS0uJcJWUM3vlHjdL9KOO0jCWWzVFIcmLhiVVG+Fy2tothBp/NhjR8WWG/6Jg/6tXvVkLG6bDgfbDaLWdE5xzjL0YG8TrIluqnu0J5GHKrQcXF650PlqkGo+whpXrS8wOG+eUmsHX9L1w/Z3TkQlMjQNJEoRbqqSrp7yGj4JqzbtLpsglPRlobD7LHp+5ZDxzpk9i+6hoMxp2muDFxnEtZyED6IMQlNNEGkc3sdmGPOo26oW2+ePkBcjpOpdVif/Iya/jDLuLFHAOol6G34Tr4IdTgaL0qCCr TEST KEY"))
 		panic_the_err(err)
 		plaintext := "some plaintext"
-		ciphertext, salt, _ := CredulousEncode(plaintext, pubkey)
-		So(salt, ShouldEqual, "pepper")
+		salter := StaticSaltGenerator{salt: "pepper"}
+		ciphertext, _, _ := CredulousEncode(plaintext, &salter, pubkey)
 		So(len(ciphertext), ShouldEqual, 344)
 	})
 }

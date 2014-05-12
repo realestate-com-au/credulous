@@ -57,16 +57,18 @@ func (cred Credential) Display(output io.Writer) {
 }
 
 func SaveCredentials(username, alias, id, secret string, pubkey ssh.PublicKey) {
-	id_encoded, salt, err := CredulousEncode(id, pubkey)
+	random_salt := RandomSaltGenerator{}
+	id_encoded, generated_salt, err := CredulousEncode(id, &random_salt, pubkey)
+	static_salt := StaticSaltGenerator{salt: generated_salt}
 	panic_the_err(err)
-	secret_encoded, salt, err := CredulousEncode(secret, pubkey)
+	secret_encoded, generated_salt, err := CredulousEncode(secret, &static_salt, pubkey)
 	panic_the_err(err)
 	creds := Credential{
 		KeyId:            id_encoded,
 		SecretKey:        secret_encoded,
 		AccountAliasOrId: alias,
 		IamUsername:      username,
-		Salt:             salt,
+		Salt:             generated_salt,
 	}
 	key_create_date, _ := getKeyCreateDate(id, secret)
 	t, err := time.Parse("2006-01-02T15:04:05Z", key_create_date)

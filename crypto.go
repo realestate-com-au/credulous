@@ -12,21 +12,37 @@ import (
 	"code.google.com/p/go.crypto/ssh"
 )
 
-func generateSalt() (salt string, err error) {
+type Salter interface {
+	GenerateSalt() (string, error)
+}
+
+type RandomSaltGenerator struct {
+}
+
+type StaticSaltGenerator struct {
+	salt string
+}
+
+func (ssg *StaticSaltGenerator) GenerateSalt() (string, error) {
+	return ssg.salt, nil
+}
+
+func (sg *RandomSaltGenerator) GenerateSalt() (string, error) {
 	const SALT_LENGTH = 8
 	b := make([]byte, SALT_LENGTH)
-	n, err := rand.Read(b)
+	_, err := rand.Read(b)
 	encoder := base64.StdEncoding
 	encoded := make([]byte, encoder.EncodedLen(len(b)))
 	encoder.Encode(encoded, b)
 	if err != nil {
-		return encoded, nil
+		return "", err
 	}
+	return string(encoded), nil
 }
 
 // returns a base64 encoded ciphertext. The salt is generated internally
-func CredulousEncode(plaintext string, pubkey ssh.PublicKey) (cipher string, salt string, err error) {
-	salt, err = generateSalt()
+func CredulousEncode(plaintext string, salter Salter, pubkey ssh.PublicKey) (cipher string, salt string, err error) {
+	salt, err = salter.GenerateSalt()
 	if err != nil {
 		return "", "", err
 	}
