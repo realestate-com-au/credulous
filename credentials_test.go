@@ -2,8 +2,11 @@ package main
 
 import (
 	"crypto/rsa"
+	"errors"
 	"io/ioutil"
+	"os"
 	"testing"
+	"time"
 
 	"code.google.com/p/go.crypto/ssh"
 	. "github.com/smartystreets/goconvey/convey"
@@ -50,6 +53,76 @@ func TestReadFile(t *testing.T) {
 			// new_cred := readCredentialFile(new_filename)
 			// fmt.Println(new_cred)
 
+		})
+	})
+}
+
+type TestFileOperator struct {
+	Cred         *Credential
+	FilePath     string
+	ErrorOnWrite bool
+}
+
+func (t *TestFileOperator) WriteToDisk(cred *Credential, path string) error {
+	t.Cred = cred
+	t.FilePath = path
+	if t.ErrorOnWrite {
+		return errors.New("A test error")
+	}
+	return nil
+}
+
+func (t *TestFileOperator) ReadFromDisk(path string) (*Credential, error) {
+	return nil, nil
+}
+
+func TestCredentialOperations(t *testing.T) {
+	Convey("Test build Path", t, func() {
+		Convey("it returns a full path to save file", func() {
+			os.Setenv("HOME", "/home/user1")
+			So(buildPath("account1", "username1"), ShouldEqual, "/home/user1/.credulous/local/account1/username1")
+		})
+	})
+
+	Convey("Test build credential file name", t, func() {
+		Convey("it returns a json filename with epoch time and last 8 chars of key", func() {
+			keyTime, _ := time.Parse("2006-01-02", "2014-05-10")
+			So(buildCredentialFileName(keyTime, "AKJJDOFIHKJD76DKHKSD"), ShouldEqual, "1399680000_76DKHKSD.json")
+		})
+	})
+
+	Convey("Test Saving Credentials", t, func() {
+		testOp := &TestFileOperator{}
+		testCred := &Credential{
+			CreateTime:       "2006-01-02T15:04:05Z",
+			KeyId:            "AKHFJSKSVOSUFGHEIJHD",
+			AccountAliasOrId: "account1",
+			IamUsername:      "user1",
+		}
+
+		Convey("it passes the cred through to the file operator", func() {
+			err := SaveCredential(testCred, testOp)
+			So(err, ShouldEqual, nil)
+			So(testOp.Cred, ShouldEqual, testCred)
+		})
+
+		Convey("it passes the correct file path", func() {
+			os.Setenv("HOME", "/home/user1")
+			err := SaveCredential(testCred, testOp)
+			So(err, ShouldEqual, nil)
+			So(testOp.FilePath, ShouldEqual, "/home/user1/.credulous/local/account1/user1/1136214245_FGHEIJHD.json")
+		})
+
+		Convey("it returns an error for a bad create time", func() {
+			testCred.CreateTime = "this is not a date"
+			err := SaveCredential(testCred, testOp)
+			So(err, ShouldNotEqual, nil)
+		})
+
+		Convey("it returns an error if the file operator errors", func() {
+			testOp.ErrorOnWrite = true
+			err := SaveCredential(testCred, testOp)
+			So(err, ShouldNotEqual, nil)
 		})
 	})
 }

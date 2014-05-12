@@ -8,6 +8,12 @@ import (
 	"launchpad.net/goamz/aws"
 )
 
+type AwsCaller interface {
+	GetAwsUsername(keyId, secret string) (string, error)
+	GetKeyCreateDate(keyId, secret string) (string, error)
+	GetAwsAccountAlias(KeyId, secret string) (string, error)
+}
+
 func getAWSUsername(key_id, secret string) (string, error) {
 	auth := aws.Auth{key_id, secret}
 	instance := iam.New(auth, aws.APSoutheast2)
