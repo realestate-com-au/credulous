@@ -52,6 +52,10 @@ func main() {
 
 				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
+					fmt.Println("Can't save, no credentials in the environment")
+					os.Exit(1)
+				}
 				username, _ := getAWSUsername(AWSAccessKeyId, AWSSecretAccessKey)
 				alias, _ := getAWSAccountAlias(AWSAccessKeyId, AWSSecretAccessKey)
 				fmt.Printf("saving credentials for %s@%s\n", username, alias)
