@@ -40,6 +40,8 @@ Required tools:
 * [git](http://git-scm.com)
 * [bzr](http://bazaar.canonical.com)
 
+Make sure you have [GOPATH](http://golang.org/doc/code.html#GOPATH) set in your environment
+
 Download the dependencies
 
     $ go get -u # -u will update existing dependencies
