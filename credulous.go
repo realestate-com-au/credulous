@@ -18,8 +18,9 @@ import (
 )
 
 func decryptPEM(pemblock *pem.Block) ([]byte, error) {
-	fmt.Fprintf(os.Stderr, "Enter passphrase for ~/.ssh/id_rsa\n")
+	fmt.Fprintf(os.Stderr, "Enter passphrase for ~/.ssh/id_rsa: ")
 	passwd, _ := gopass.GetPass("")
+	fmt.Fprintf(os.Stderr, "\n")
 	decryptedBytes, err := x509.DecryptPEMBlock(pemblock, []byte(passwd))
 	panic_the_err(err)
 	pemBytes := pem.Block{
