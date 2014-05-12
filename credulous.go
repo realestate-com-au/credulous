@@ -1,17 +1,33 @@
 package main
 
 import (
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
 	"crypto/rsa"
+	"crypto/x509"
 
 	"code.google.com/p/go.crypto/ssh"
 
+	"code.google.com/p/gopass"
 	"github.com/codegangsta/cli"
 )
+
+func decryptPEM(pemblock *pem.Block) ([]byte, error) {
+	passwd, _ := gopass.GetPass("Enter passphrase for ~/.ssh/id_rsa: ")
+	decrypted_bytes, err := x509.DecryptPEMBlock(pemblock, []byte(passwd))
+	panic_the_err(err)
+	pem_bytes := pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: decrypted_bytes,
+	}
+	decrypted_pem := pem.EncodeToMemory(&pem_bytes)
+	return decrypted_pem, nil
+}
 
 func main() {
 	app := cli.NewApp()
@@ -29,7 +45,7 @@ func main() {
 			Action: func(c *cli.Context) {
 				var pubkey_file string
 				if c.String("key") == "" {
-					pubkey_file = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa_nopasswd.pub")
+					pubkey_file = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
 				} else {
 					pubkey_file = c.String("key")
 				}
@@ -55,12 +71,18 @@ func main() {
 			Action: func(c *cli.Context) {
 
 				home := os.Getenv("HOME")
-				tmp, err := ioutil.ReadFile(home + "/.ssh/id_rsa_nopasswd")
+				tmp, err := ioutil.ReadFile(home + "/.ssh/id_rsa")
 				panic_the_err(err)
+				pemblock, _ := pem.Decode([]byte(tmp))
+				if x509.IsEncryptedPEMBlock(pemblock) {
+					tmp, err = decryptPEM(pemblock)
+					panic_the_err(err)
+				} else {
+					log.Print("WARNING: Your private SSH key has no passphrase!")
+				}
 				key, err := ssh.ParseRawPrivateKey(tmp)
 				panic_the_err(err)
 				privkey := key.(*rsa.PrivateKey)
-
 				cred := RetrieveCredentials(c.String("account"), c.String("username"), privkey)
 				cred.Display(os.Stdout)
 			},
