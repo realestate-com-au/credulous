@@ -66,12 +66,17 @@ func main() {
 			Usage: "Source AWS credentials from a file.",
 			Flags: []cli.Flag{
 				cli.StringFlag{"account, a", "", "AWS Account alias or id"},
+				cli.StringFlag{"key, k", "", "SSH private key"},
 				cli.StringFlag{"username, u", "", "IAM User"},
 			},
 			Action: func(c *cli.Context) {
-
-				home := os.Getenv("HOME")
-				tmp, err := ioutil.ReadFile(home + "/.ssh/id_rsa")
+				var privateKey string
+				if c.String("key") == "" {
+					privateKey = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
+				} else {
+					privateKey = c.String("key")
+				}
+				tmp, err := ioutil.ReadFile(privateKey)
 				panic_the_err(err)
 				pemblock, _ := pem.Decode([]byte(tmp))
 				if x509.IsEncryptedPEMBlock(pemblock) {
