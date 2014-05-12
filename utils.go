@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"errors"
+	"os"
 )
 
 func panic_the_err(err error) {
