@@ -12,9 +12,24 @@ import (
 	"code.google.com/p/go.crypto/ssh"
 )
 
+func generateSalt() (salt string, err error) {
+	const SALT_LENGTH = 8
+	b := make([]byte, SALT_LENGTH)
+	n, err := rand.Read(b)
+	encoder := base64.StdEncoding
+	encoded := make([]byte, encoder.EncodedLen(len(b)))
+	encoder.Encode(encoded, b)
+	if err != nil {
+		return encoded, nil
+	}
+}
+
 // returns a base64 encoded ciphertext. The salt is generated internally
 func CredulousEncode(plaintext string, pubkey ssh.PublicKey) (cipher string, salt string, err error) {
-	salt = "pepper"
+	salt, err = generateSalt()
+	if err != nil {
+		return "", "", err
+	}
 	s := reflect.ValueOf(pubkey).Elem()
 	rsaKey := rsa.PublicKey{
 		N: s.Field(0).Interface().(*big.Int),
