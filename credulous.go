@@ -19,14 +19,14 @@ import (
 
 func decryptPEM(pemblock *pem.Block) ([]byte, error) {
 	passwd, _ := gopass.GetPass("Enter passphrase for ~/.ssh/id_rsa: ")
-	decrypted_bytes, err := x509.DecryptPEMBlock(pemblock, []byte(passwd))
+	decryptedBytes, err := x509.DecryptPEMBlock(pemblock, []byte(passwd))
 	panic_the_err(err)
-	pem_bytes := pem.Block{
+	pemBytes := pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: decrypted_bytes,
+		Bytes: decryptedBytes,
 	}
-	decrypted_pem := pem.EncodeToMemory(&pem_bytes)
-	return decrypted_pem, nil
+	decryptedPEM := pem.EncodeToMemory(&pemBytes)
+	return decryptedPEM, nil
 }
 
 func main() {
@@ -43,22 +43,22 @@ func main() {
 				cli.StringFlag{"key, k", "", "SSH public key"},
 			},
 			Action: func(c *cli.Context) {
-				var pubkey_file string
+				var pubkeyFile string
 				if c.String("key") == "" {
-					pubkey_file = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
+					pubkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
 				} else {
-					pubkey_file = c.String("key")
+					pubkeyFile = c.String("key")
 				}
 
-				aws_access_key_id := os.Getenv("AWS_ACCESS_KEY_ID")
-				aws_secret_access_key := os.Getenv("AWS_SECRET_ACCESS_KEY")
-				username, _ := getAWSUsername(aws_access_key_id, aws_secret_access_key)
-				alias, _ := getAWSAccountAlias(aws_access_key_id, aws_secret_access_key)
+				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				username, _ := getAWSUsername(AWSAccessKeyId, AWSSecretAccessKey)
+				alias, _ := getAWSAccountAlias(AWSAccessKeyId, AWSSecretAccessKey)
 				fmt.Printf("saving credentials for %s@%s\n", username, alias)
-				pubkey_str, err := ioutil.ReadFile(pubkey_file)
+				pubkeyString, err := ioutil.ReadFile(pubkeyFile)
 				panic_the_err(err)
-				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkey_str))
-				SaveCredentials(username, alias, aws_access_key_id, aws_secret_access_key, pubkey)
+				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkeyString))
+				SaveCredentials(username, alias, AWSAccessKeyId, AWSSecretAccessKey, pubkey)
 			},
 		},
 		{
@@ -70,13 +70,13 @@ func main() {
 				cli.StringFlag{"username, u", "", "IAM User"},
 			},
 			Action: func(c *cli.Context) {
-				var privateKey string
+				var privkeyFile string
 				if c.String("key") == "" {
-					privateKey = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
+					privkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
 				} else {
-					privateKey = c.String("key")
+					privkeyFile = c.String("key")
 				}
-				tmp, err := ioutil.ReadFile(privateKey)
+				tmp, err := ioutil.ReadFile(privkeyFile)
 				panic_the_err(err)
 				pemblock, _ := pem.Decode([]byte(tmp))
 				if x509.IsEncryptedPEMBlock(pemblock) {
@@ -87,8 +87,8 @@ func main() {
 				}
 				key, err := ssh.ParseRawPrivateKey(tmp)
 				panic_the_err(err)
-				privkey := key.(*rsa.PrivateKey)
-				cred := RetrieveCredentials(c.String("account"), c.String("username"), privkey)
+				privateKey := key.(*rsa.PrivateKey)
+				cred := RetrieveCredentials(c.String("account"), c.String("username"), privateKey)
 				cred.Display(os.Stdout)
 			},
 		},
@@ -96,10 +96,10 @@ func main() {
 			Name:  "display",
 			Usage: "Display loaded AWS credentials",
 			Action: func(c *cli.Context) {
-				aws_access_key_id := os.Getenv("AWS_ACCESS_KEY_ID")
-				aws_secret_access_key := os.Getenv("AWS_SECRET_ACCESS_KEY")
-				fmt.Printf("AWS_ACCESS_KEY_ID: %s\n", aws_access_key_id)
-				fmt.Printf("AWS_SECRET_ACCESS_KEY: %s\n", aws_secret_access_key)
+				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				fmt.Printf("AWS_ACCESS_KEY_ID: %s\n", AWSAccessKeyId)
+				fmt.Printf("AWS_SECRET_ACCESS_KEY: %s\n", AWSSecretAccessKey)
 			},
 		},
 	}
