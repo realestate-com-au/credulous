@@ -17,12 +17,25 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-func decryptPEM(pemblock *pem.Block) ([]byte, error) {
-	fmt.Fprintf(os.Stderr, "Enter passphrase for ~/.ssh/id_rsa: ")
-	passwd, _ := gopass.GetPass("")
-	fmt.Fprintf(os.Stderr, "\n")
-	decryptedBytes, err := x509.DecryptPEMBlock(pemblock, []byte(passwd))
-	panic_the_err(err)
+func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
+	var err error
+	if _, err = fmt.Fprintf(os.Stderr, "Enter passphrase for %s: ", filename); err != nil {
+		return []byte(""), err
+	}
+
+	// we already emit the prompt to stderr; GetPass only emits to stdout
+	var passwd string
+	if passwd, err = gopass.GetPass(""); err != nil {
+		return []byte(""), err
+	}
+	// Since the trailing CR isn't echoed, we need to fill it in
+	fmt.Fprint(os.Stderr, "\n")
+
+	var decryptedBytes []byte
+	if decryptedBytes, err = x509.DecryptPEMBlock(pemblock, []byte(passwd)); err != nil {
+		return []byte(""), err
+	}
+
 	pemBytes := pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: decryptedBytes,
@@ -77,22 +90,32 @@ func main() {
 			},
 			Action: func(c *cli.Context) {
 				var privkeyFile string
+				var tmp []byte
+				var err error
+
 				if c.String("key") == "" {
 					privkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
 				} else {
 					privkeyFile = c.String("key")
 				}
-				tmp, err := ioutil.ReadFile(privkeyFile)
-				panic_the_err(err)
+
+				if tmp, err = ioutil.ReadFile(privkeyFile); err != nil {
+					panic_the_err(err)
+				}
+
 				pemblock, _ := pem.Decode([]byte(tmp))
 				if x509.IsEncryptedPEMBlock(pemblock) {
-					tmp, err = decryptPEM(pemblock)
-					panic_the_err(err)
+					if tmp, err = decryptPEM(pemblock, privkeyFile); err != nil {
+						panic_the_err(err)
+					}
 				} else {
 					log.Print("WARNING: Your private SSH key has no passphrase!")
 				}
+
 				key, err := ssh.ParseRawPrivateKey(tmp)
-				panic_the_err(err)
+				if err != nil {
+					panic_the_err(err)
+				}
 				privateKey := key.(*rsa.PrivateKey)
 				cred := RetrieveCredentials(c.String("account"), c.String("username"), privateKey)
 				cred.Display(os.Stdout)
