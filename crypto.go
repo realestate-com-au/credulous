@@ -40,6 +40,24 @@ func (sg *RandomSaltGenerator) GenerateSalt() (string, error) {
 	return string(encoded), nil
 }
 
+func EncryptCredential(cred *Credential, pubkey ssh.PublicKey) error {
+	randomSalter := &RandomSaltGenerator{}
+	encKeyId, salt, err := CredulousEncode(cred.KeyId, randomSalter, pubkey)
+	if err != nil {
+		return err
+	}
+	staticSalter := &StaticSaltGenerator{salt: salt}
+	encSecretId, _, err := CredulousEncode(cred.SecretKey, staticSalter, pubkey)
+	if err != nil {
+		return err
+	}
+
+	cred.KeyId = encKeyId
+	cred.SecretKey = encSecretId
+	cred.Salt = salt
+	return nil
+}
+
 // returns a base64 encoded ciphertext. The salt is generated internally
 func CredulousEncode(plaintext string, salter Salter, pubkey ssh.PublicKey) (cipher string, salt string, err error) {
 	salt, err = salter.GenerateSalt()

@@ -11,13 +11,26 @@ import (
 )
 
 func TestEncode(t *testing.T) {
-	Convey("Test Encode A String", t, func() {
-		pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXg9Vmhy9YSB8BcN3yHgQjdX9lN3j2KRpv7kVDXSiIana2WbKP7IiTS0uJcJWUM3vlHjdL9KOO0jCWWzVFIcmLhiVVG+Fy2tothBp/NhjR8WWG/6Jg/6tXvVkLG6bDgfbDaLWdE5xzjL0YG8TrIluqnu0J5GHKrQcXF650PlqkGo+whpXrS8wOG+eUmsHX9L1w/Z3TkQlMjQNJEoRbqqSrp7yGj4JqzbtLpsglPRlobD7LHp+5ZDxzpk9i+6hoMxp2muDFxnEtZyED6IMQlNNEGkc3sdmGPOo26oW2+ePkBcjpOpdVif/Iya/jDLuLFHAOol6G34Tr4IdTgaL0qCCr TEST KEY"))
-		panic_the_err(err)
+	pubkey, _, _, _, _ := ssh.ParseAuthorizedKey([]byte("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXg9Vmhy9YSB8BcN3yHgQjdX9lN3j2KRpv7kVDXSiIana2WbKP7IiTS0uJcJWUM3vlHjdL9KOO0jCWWzVFIcmLhiVVG+Fy2tothBp/NhjR8WWG/6Jg/6tXvVkLG6bDgfbDaLWdE5xzjL0YG8TrIluqnu0J5GHKrQcXF650PlqkGo+whpXrS8wOG+eUmsHX9L1w/Z3TkQlMjQNJEoRbqqSrp7yGj4JqzbtLpsglPRlobD7LHp+5ZDxzpk9i+6hoMxp2muDFxnEtZyED6IMQlNNEGkc3sdmGPOo26oW2+ePkBcjpOpdVif/Iya/jDLuLFHAOol6G34Tr4IdTgaL0qCCr TEST KEY"))
+
+	Convey("Test credulous encode", t, func() {
 		plaintext := "some plaintext"
 		salter := StaticSaltGenerator{salt: "pepper"}
 		ciphertext, _, _ := CredulousEncode(plaintext, &salter, pubkey)
 		So(len(ciphertext), ShouldEqual, 344)
+	})
+
+	Convey("Test EncryptCredential", t, func() {
+		cred := &Credential{
+			KeyId:     "A key here",
+			SecretKey: "Secret key here",
+		}
+
+		err := EncryptCredential(cred, pubkey)
+		So(err, ShouldEqual, nil)
+		So(cred.KeyId, ShouldNotEqual, "A key here")
+		So(cred.SecretKey, ShouldNotEqual, "Secret key here")
+		So(cred.Salt, ShouldNotEqual, "")
 	})
 }
 
