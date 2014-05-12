@@ -9,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"code.google.com/p/go.crypto/ssh"
 )
 
 type FileOperator interface {
@@ -18,8 +16,7 @@ type FileOperator interface {
 	WriteToDisk(cred *Credential, path string) error
 }
 
-type ConcreteFileOperator struct {
-}
+type ConcreteFileOperator struct{}
 
 func (c *ConcreteFileOperator) ReadFromDisk(path string) (*Credential, error) {
 	return nil, nil
@@ -139,26 +136,6 @@ func (cred Credential) WriteToDisk(filename string) {
 
 func (cred Credential) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n", cred.KeyId, cred.SecretKey)
-}
-
-func SaveCredentials(username, alias, id, secret string, pubkey ssh.PublicKey) {
-	random_salt := RandomSaltGenerator{}
-	id_encoded, generated_salt, err := CredulousEncode(id, &random_salt, pubkey)
-	static_salt := StaticSaltGenerator{salt: generated_salt}
-	panic_the_err(err)
-	secret_encoded, generated_salt, err := CredulousEncode(secret, &static_salt, pubkey)
-	panic_the_err(err)
-	creds := Credential{
-		KeyId:            id_encoded,
-		SecretKey:        secret_encoded,
-		AccountAliasOrId: alias,
-		IamUsername:      username,
-		Salt:             generated_salt,
-	}
-	key_create_date, _ := getKeyCreateDate(id, secret)
-	t, err := time.Parse("2006-01-02T15:04:05Z", key_create_date)
-	panic_the_err(err)
-	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", t.Unix(), id[12:]))
 }
 
 func getRootPath() string {

@@ -29,6 +29,13 @@ func decryptPEM(pemblock *pem.Block) ([]byte, error) {
 	return decrypted_pem, nil
 }
 
+func printErrAndExit(err error) {
+	if err != nil {
+		fmt.Printf("There was an error %v\n", err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "Credulous"
@@ -50,15 +57,18 @@ func main() {
 					pubkey_file = c.String("key")
 				}
 
-				aws_access_key_id := os.Getenv("AWS_ACCESS_KEY_ID")
-				aws_secret_access_key := os.Getenv("AWS_SECRET_ACCESS_KEY")
-				username, _ := getAWSUsername(aws_access_key_id, aws_secret_access_key)
-				alias, _ := getAWSAccountAlias(aws_access_key_id, aws_secret_access_key)
-				fmt.Printf("saving credentials for %s@%s\n", username, alias)
-				pubkey_str, err := ioutil.ReadFile(pubkey_file)
-				panic_the_err(err)
-				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkey_str))
-				SaveCredentials(username, alias, aws_access_key_id, aws_secret_access_key, pubkey)
+				pkFile, err := os.Open(pubkey_file)
+				printErrAndExit(err)
+				keyId := os.Getenv("AWS_ACCESS_KEY_ID")
+				secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				cred, err := NewCredential(keyId, secretKey, &AwsRequestor{})
+				printErrAndExit(err)
+				fmt.Printf("saving credentials for %s@%s\n", cred.IamUsername, cred.AccountAliasOrId)
+				pubKey, err := RetrievePublicKey(pkFile)
+				printErrAndExit(err)
+				err = EncryptCredential(cred, pubKey)
+				printErrAndExit(err)
+				SaveCredential(cred, &ConcreteFileOperator{})
 			},
 		},
 		{

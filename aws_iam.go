@@ -14,34 +14,42 @@ type AwsCaller interface {
 	GetAwsAccountAlias(KeyId, secret string) (string, error)
 }
 
-func getAWSUsername(key_id, secret string) (string, error) {
-	auth := aws.Auth{key_id, secret}
+type AwsRequestor struct{}
+
+func (a *AwsRequestor) GetAwsAccountAlias(keyId, secret string) (string, error) {
+	auth := aws.Auth{keyId, secret}
+	instance := iam.New(auth, aws.APSoutheast2)
+	response, err := instance.ListAccountAliases()
+	if err != nil {
+		return "", err
+	}
+	// There really is only one alias
+	return response.Aliases[0], nil
+}
+
+func (a *AwsRequestor) GetAwsUsername(keyId, secret string) (string, error) {
+	auth := aws.Auth{keyId, secret}
 	instance := iam.New(auth, aws.APSoutheast2)
 	response, err := instance.GetUser("")
-	panic_the_err(err)
+	if err != nil {
+		return "", err
+	}
 	return response.User.Name, nil
 }
 
-func getKeyCreateDate(key_id, secret string) (string, error) {
-	auth := aws.Auth{key_id, secret}
+func (a *AwsRequestor) GetKeyCreateDate(keyId, secret string) (string, error) {
+	auth := aws.Auth{keyId, secret}
 	instance := iam.New(auth, aws.APSoutheast2)
 	response, err := instance.AccessKeys("")
-	panic_the_err(err)
+	if err != nil {
+		return "", err
+	}
 	for _, key := range response.AccessKeys {
-		if key.Id == key_id {
+		if key.Id == keyId {
 			return key.CreateDate, nil
 		}
 	}
 	return "", errors.New("Couldn't find this key")
-}
-
-func getAWSAccountAlias(key_id, secret string) (string, error) {
-	auth := aws.Auth{key_id, secret}
-	instance := iam.New(auth, aws.APSoutheast2)
-	response, err := instance.ListAccountAliases()
-	panic_the_err(err)
-	// There really is only one alias
-	return response.Aliases[0], nil
 }
 
 func verify_account(alias string, iam_instance *iam.IAM) (bool, error) {

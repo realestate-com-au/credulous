@@ -5,6 +5,8 @@ import (
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/base64"
+	"io"
+	"io/ioutil"
 	"math/big"
 	"reflect"
 	"strings"
@@ -12,12 +14,25 @@ import (
 	"code.google.com/p/go.crypto/ssh"
 )
 
+func RetrievePublicKey(file io.Reader) (ssh.PublicKey, error) {
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	pubkey, _, _, _, err := ssh.ParseAuthorizedKey(data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pubkey, nil
+}
+
 type Salter interface {
 	GenerateSalt() (string, error)
 }
 
-type RandomSaltGenerator struct {
-}
+type RandomSaltGenerator struct{}
 
 type StaticSaltGenerator struct {
 	salt string
