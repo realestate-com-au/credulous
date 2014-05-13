@@ -9,10 +9,12 @@ workflow.
 ![Credulous Security](https://github.com/realestate-com-au/credulous/raw/master/site/credulous-security.png)
 
 ## Main Features
+
 * Your IAM Credentials are securely encrypted on disk.
 * Easy switching of Credentials between Accounts/Users.
 * Painless Credential rotation.
 * Enables rotation of Credentials by external application/service.
+* No external runtime dependencies beyond minimal platform-specific shared libraries
 
 ## Installation
 
