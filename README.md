@@ -27,10 +27,11 @@ Storing your current credentials in Credulous
     $ export AWS_ACCESS_KEY_ID=YOUR_AWS_ID
     $ export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXX
     $ credulous save # Will ask credulous to store these credentials
+    # saving credentials for user@account
 
 Displaying a set of credentials from Credulous
 
-    $ credulous source
+    $ credulous source -a account -u user
     export AWS_ACCESS_KEY_ID=YOUR_AWS_ID
     export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXX
 
