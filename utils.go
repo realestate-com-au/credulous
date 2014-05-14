@@ -3,11 +3,13 @@ package main
 import (
 	"errors"
 	"os"
+	"fmt"
 )
 
 func panic_the_err(err error) {
 	if err != nil {
-		panic(err)
+		fmt.Printf("ERROR: %s\n", err)
+		os.Exit(1)
 	}
 }
 
