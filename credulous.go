@@ -28,8 +28,6 @@ func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 	if passwd, err = gopass.GetPass(""); err != nil {
 		return []byte(""), err
 	}
-	// Since the trailing CR isn't echoed, we need to fill it in
-	fmt.Fprint(os.Stderr, "\n")
 
 	var decryptedBytes []byte
 	if decryptedBytes, err = x509.DecryptPEMBlock(pemblock, []byte(passwd)); err != nil {
