@@ -3,7 +3,9 @@ package main
 import (
 	"crypto/rsa"
 	"io/ioutil"
+	"os"
 	"testing"
+	"time"
 
 	"code.google.com/p/go.crypto/ssh"
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,6 +20,80 @@ type TestWriter struct {
 func (t *TestWriter) Write(p []byte) (n int, err error) {
 	t.Written = p
 	return 0, nil
+}
+
+type TestFileList struct {
+	testList []os.FileInfo
+}
+
+func (t *TestFileList) Readdir(n int) ([]os.FileInfo, error) {
+	return t.testList, nil
+}
+
+type TestFileInfo struct {
+	isDir bool
+	name  string
+}
+
+func (t *TestFileInfo) IsDir() bool {
+	return t.isDir
+}
+
+func (t *TestFileInfo) Name() string {
+	return t.name
+}
+
+func (t *TestFileInfo) Size() int64 {
+	return 0
+}
+
+func (t *TestFileInfo) Mode() os.FileMode {
+	return 0
+}
+
+func (t *TestFileInfo) ModTime() time.Time {
+	return time.Now()
+}
+
+func (t *TestFileInfo) Sys() interface{} {
+	return nil
+}
+
+func TestFindDefaultDir(t *testing.T) {
+	Convey("Test Finding Default Dirs", t, func() {
+		Convey("With no files or directories", func() {
+			t := TestFileList{}
+			_, err := findDefaultDir(&t)
+			So(err.Error(), ShouldEqual, "No saved credentials found; please run 'credulous save' first")
+		})
+		Convey("With one file and no directories", func() {
+			i := []os.FileInfo{}
+			i = append(i, &TestFileInfo{isDir: false})
+			t := TestFileList{testList: i}
+			_, err := findDefaultDir(&t)
+			So(err, ShouldNotEqual, nil)
+			So(err.Error(), ShouldEqual, "No saved credentials found; please run 'credulous save' first")
+		})
+		Convey("With one file and one directory", func() {
+			i := []os.FileInfo{}
+			i = append(i, &TestFileInfo{isDir: false})
+			i = append(i, &TestFileInfo{isDir: true, name: "foo"})
+			t := TestFileList{testList: i}
+			name, err := findDefaultDir(&t)
+			So(err, ShouldEqual, nil)
+			So(name, ShouldEqual, "foo")
+		})
+		Convey("With no files and more than one directory", func() {
+			i := []os.FileInfo{}
+			i = append(i, &TestFileInfo{isDir: true, name: "foo"})
+			i = append(i, &TestFileInfo{isDir: true, name: "bar"})
+			i = append(i, &TestFileInfo{isDir: true, name: "baz"})
+			t := TestFileList{testList: i}
+			_, err := findDefaultDir(&t)
+			So(err, ShouldNotEqual, nil)
+			So(err.Error(), ShouldEqual, "More than one account found; please specify account and user")
+		})
+	})
 }
 
 func TestReadFile(t *testing.T) {

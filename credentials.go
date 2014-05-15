@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rsa"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -83,8 +84,58 @@ func getRootPath() string {
 	return rootPath
 }
 
+type FileLister interface {
+	Readdir(int) ([]os.FileInfo, error)
+}
+
+func findDefaultDir(fl FileLister) (string, error) {
+	dirents, err := fl.Readdir(0)
+	if err != nil {
+		return "", err
+	}
+
+	dirs := []os.FileInfo{}
+	for _, dirent := range dirents {
+		if dirent.IsDir() {
+			dirs = append(dirs, dirent)
+		}
+	}
+
+	switch {
+	case len(dirs) == 0:
+		return "", errors.New("No saved credentials found; please run 'credulous save' first")
+	case len(dirs) > 1:
+		return "", errors.New("More than one account found; please specify account and user")
+	}
+
+	return dirs[0].Name(), nil
+}
+
 func RetrieveCredentials(alias string, username string, privkey *rsa.PrivateKey) Credential {
-	fullPath := filepath.Join(getRootPath(), "local", alias, username)
+	rootPath := filepath.Join(getRootPath(), "local")
+	rootDir, err := os.Open(rootPath)
+	if err != nil {
+		panic_the_err(err)
+	}
+
+	if alias == "" {
+		if alias, err = findDefaultDir(rootDir); err != nil {
+			panic_the_err(err)
+		}
+	}
+
+	if username == "" {
+		aliasDir, err := os.Open(filepath.Join(rootPath, alias))
+		if err != nil {
+			panic_the_err(err)
+		}
+		username, err = findDefaultDir(aliasDir)
+		if err != nil {
+			panic_the_err(err)
+		}
+	}
+
+	fullPath := filepath.Join(rootPath, alias, username)
 	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
 	return *readCredentialFile(filePath, privkey)
 }
