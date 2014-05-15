@@ -44,7 +44,7 @@ func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "Credulous"
+	app.Name = "credulous"
 	app.Usage = "Use it!"
 	app.Version = "0.1.2"
 
