@@ -2,7 +2,7 @@
 %define debug_package %{nil}
 
 Name:		credulous
-Version:	0.1.2
+Version:	0.1.3
 Release:	1%{?dist}
 Summary:	Secure AWS credential storage, rotation and redistribution
 
@@ -41,5 +41,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root)		%{_bindir}/credulous
 
 %changelog
+* Sat May 17 2014 Colin Panisset <colin.panisset@rea-group.com> 0.1.3-1
+- add listing of stored credentials
+- return default credentials if there's only one set
+- more tests and stability
 * Fri May 16 2014 Colin Panisset <colin.panisset@rea-group.com> 0.1.2-1
 - Initial RPM packaging
