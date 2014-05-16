@@ -129,6 +129,15 @@ func main() {
 				fmt.Printf("AWS_SECRET_ACCESS_KEY: %s\n", AWSSecretAccessKey)
 			},
 		},
+		{
+			Name:  "list",
+			Usage: "List the sets of available credentials",
+			Action: func(c *cli.Context) {
+				if err := listAvailableCredentials(); err != nil {
+					panic_the_err(err)
+				}
+			},
+		},
 	}
 
 	app.Run(os.Args)

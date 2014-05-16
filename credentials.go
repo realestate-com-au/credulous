@@ -88,10 +88,10 @@ type FileLister interface {
 	Readdir(int) ([]os.FileInfo, error)
 }
 
-func findDefaultDir(fl FileLister) (string, error) {
-	dirents, err := fl.Readdir(0)
+func getDirs(fl FileLister) ([]os.FileInfo, error) {
+	dirents, err := fl.Readdir(0) // get all the entries
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	dirs := []os.FileInfo{}
@@ -99,6 +99,15 @@ func findDefaultDir(fl FileLister) (string, error) {
 		if dirent.IsDir() {
 			dirs = append(dirs, dirent)
 		}
+	}
+
+	return dirs, nil
+}
+
+func findDefaultDir(fl FileLister) (string, error) {
+	dirs, err := getDirs(fl)
+	if err != nil {
+		return "", err
 	}
 
 	switch {
@@ -144,4 +153,54 @@ func latestFileInDir(dir string) os.FileInfo {
 	entries, err := ioutil.ReadDir(dir)
 	panic_the_err(err)
 	return entries[len(entries)-1]
+}
+
+func listAvailableCredentials() error {
+	rootDir, err := os.Open(getRootPath())
+	if err != nil {
+		return err
+	}
+
+	repo_dirs, err := getDirs(rootDir) // get just the directories
+	if err != nil {
+		return err
+	}
+
+	if len(repo_dirs) == 0 {
+		return errors.New("No saved credentials found; please run 'credulous save' first")
+	}
+
+	for _, repo_dirent := range repo_dirs {
+		repo_path := filepath.Join(getRootPath(), repo_dirent.Name())
+		repo_dir, err := os.Open(repo_path)
+		if err != nil {
+			return err
+		}
+
+		alias_dirs, err := getDirs(repo_dir)
+		if err != nil {
+			return err
+		}
+
+		for _, alias_dirent := range alias_dirs {
+			alias_path := filepath.Join(repo_path, alias_dirent.Name())
+			alias_dir, err := os.Open(alias_path)
+			if err != nil {
+				return err
+			}
+
+			user_dirs, err := getDirs(alias_dir)
+			if err != nil {
+				return err
+			}
+
+			for _, user_dirent := range user_dirs {
+				user_path := filepath.Join(alias_path, user_dirent.Name())
+				if latest := latestFileInDir(user_path); latest.Name() != "" {
+					fmt.Println(user_dirent.Name() + "@" + alias_dirent.Name())
+				}
+			}
+		}
+	}
+	return nil
 }
