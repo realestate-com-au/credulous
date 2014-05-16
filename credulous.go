@@ -133,8 +133,16 @@ func main() {
 			Name:  "list",
 			Usage: "List the sets of available credentials",
 			Action: func(c *cli.Context) {
-				if err := listAvailableCredentials(); err != nil {
+				rootDir, err := os.Open(getRootPath())
+				if err != nil {
 					panic_the_err(err)
+				}
+				set, err := listAvailableCredentials(rootDir)
+				if err != nil {
+					panic_the_err(err)
+				}
+				for _, cred := range set {
+					fmt.Println(cred)
 				}
 			},
 		},

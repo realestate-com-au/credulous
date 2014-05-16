@@ -169,3 +169,14 @@ func TestReadFile(t *testing.T) {
 		})
 	})
 }
+
+func TestListAvailableCreds(t *testing.T) {
+	Convey("Test listing available credentials", t, func() {
+		Convey("Test with no credentials", func() {
+			tmp := TestFileList{}
+			creds, err := listAvailableCredentials(&tmp)
+			So(len(creds), ShouldEqual, 0)
+			So(err.Error(), ShouldEqual, "No saved credentials found; please run 'credulous save' first")
+		})
+	})
+}
