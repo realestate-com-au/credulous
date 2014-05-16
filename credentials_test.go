@@ -59,6 +59,46 @@ func (t *TestFileInfo) Sys() interface{} {
 	return nil
 }
 
+func TestGetDirs(t *testing.T) {
+	Convey("Test finding all dirs", t, func() {
+		Convey("Test with nothing", func() {
+			t := TestFileList{}
+			ents, err := getDirs(&t)
+			So(err, ShouldEqual, nil)
+			So(len(ents), ShouldEqual, 0)
+		})
+		Convey("Test with files only", func() {
+			i := []os.FileInfo{}
+			i = append(i, &TestFileInfo{isDir: false})
+			i = append(i, &TestFileInfo{isDir: false})
+			i = append(i, &TestFileInfo{isDir: false})
+			t := TestFileList{testList: i}
+			ents, err := getDirs(&t)
+			So(err, ShouldEqual, nil)
+			So(len(ents), ShouldEqual, 0)
+		})
+		Convey("Test with one dir", func() {
+			i := []os.FileInfo{}
+			i = append(i, &TestFileInfo{isDir: true})
+			t := TestFileList{testList: i}
+			ents, err := getDirs(&t)
+			So(err, ShouldEqual, nil)
+			So(len(ents), ShouldEqual, 1)
+		})
+		Convey("Test with multiple dirs", func() {
+			i := []os.FileInfo{}
+			i = append(i, &TestFileInfo{isDir: true})
+			i = append(i, &TestFileInfo{isDir: true})
+			i = append(i, &TestFileInfo{isDir: true})
+			i = append(i, &TestFileInfo{isDir: true})
+			t := TestFileList{testList: i}
+			ents, err := getDirs(&t)
+			So(err, ShouldEqual, nil)
+			So(len(ents), ShouldEqual, 4)
+		})
+	})
+}
+
 func TestFindDefaultDir(t *testing.T) {
 	Convey("Test Finding Default Dirs", t, func() {
 		Convey("With no files or directories", func() {
