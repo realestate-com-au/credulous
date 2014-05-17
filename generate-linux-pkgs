@@ -5,11 +5,11 @@ if [ -f /etc/redhat-release ]; then
 elif [ -f /etc/debian_version ]; then
     # Ooh, this is nasty
     # Manually pre-install dependencies
-    sudo apt-get install adduser python python-decoratortools rpm usermode yum
+    sudo apt-get install adduser python python-decoratortools rpm usermode yum yum-utils
     # ... and now install mock from lucid (winces)
-    wget http://mirrors.kernel.org/ubuntu/pool/universe/m/mock/mock_0.9.7-3_all.deb
+    wget http://mirrors.kernel.org/ubuntu/pool/universe/m/mock/mock_1.1.33-1_all.deb
     # (sorry)
-    sudo dpkg -i mock_0.9.7-3_all.deb
+    sudo dpkg -i mock_1.1.33-1_all.deb
 else
     echo "I don't know what distro I'm on"
     exit 1
@@ -18,4 +18,6 @@ fi
 # This is annoying; Travis-CI uses ubuntu 12.04 for its build agents
 # and 12.04 doesn't have mock. 10.04 did, and 14.04 does, but not
 # anything in between. So the nastiness above ...
-make mock
+# Now add to this that mock requires special group privileges, and we
+# can't newgrp to run a command, so let's use sudo instead
+sudo -g mock make mock
