@@ -24,7 +24,17 @@ RPM=$(NVR).x86_64.rpm
 
 all: mock
 
-rpm: mock
+# This is a dirty hack for building on ubuntu build agents in Travis.
+rpmbuild: sources
+	@mkdir -p 	$(HOME)/rpmbuild/SOURCES \
+			$(HOME)/rpmbuild/SRPMS \
+			$(HOME)/rpmbuild/RPMS \
+			$(HOME)/rpmbuild/SPECS \
+			$(HOME)/rpmbuild/BUILD \
+			$(HOME)/rpmbuild/BUILDROOT
+	cp $(NAME)-$(VERSION).tar.gz $(HOME)/rpmbuild/SOURCES
+	rpmbuild -bs --target x86_64 --nodeps rpm/credulous.spec
+	rpmbuild -bb --target x86_64 --nodeps rpm/credulous.spec
 
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:

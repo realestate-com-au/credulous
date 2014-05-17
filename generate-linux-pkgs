@@ -9,12 +9,9 @@ else
     exit 1
 fi
 
-# make sure we have mock for RPMs
-sudo $INSTALL_PKG mock
-
-# mock most often requires special privs; we can't newgrp into
-# the mock group, because it spawns a subshell, so let's just
-# sudo it. Note I'm making assumptions about building under
-# Travis-CI here.
-
-sudo make rpm
+# This is annoying; Travis-CI uses ubuntu 12.04 for its build agents
+# and 12.04 doesn't have mock. 10.04 did, and 14.04 does, but not
+# anything in between. So we have to just trust that libpthreads and
+# libc versions are "good enough" on ubuntu to be able to run on
+# Fedora, CentOS, etc.
+make rpmbuild
