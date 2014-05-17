@@ -12,9 +12,8 @@ SPEC=rpm/credulous.spec
 NAME=$(shell grep '^Name:' $(SPEC) | awk '{ print $$2 }' )
 VERSION=$(shell grep '^Version:' $(SPEC) | awk '{ print $$2 }' )
 RELEASE=$(shell grep '^Release:' $(SPEC) | awk '{ print $$2 }' | sed -e 's/%{?dist}/.$(DIST)/' )
-# only query mock if it's installed
-MOCK_ROOT=$(shell type -p mock >/dev/null && /usr/bin/mock -r $(MOCK_CONFIG) --print-root-path)
-MOCK_RESULT=$(shell /bin/readlink -f $(MOCK_ROOT)/../result)
+
+MOCK_RESULT=/var/lib/mock/$(MOCK_CONFIG)/result
 
 NVR=$(NAME)-$(VERSION)-$(RELEASE)
 MOCK_SRPM=$(NVR).src.rpm
