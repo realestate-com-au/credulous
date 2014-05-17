@@ -5,13 +5,15 @@ if [ -f /etc/redhat-release ]; then
 elif [ -f /etc/debian_version ]; then
     # Ooh, this is nasty
     # Manually pre-install dependencies
-    sudo apt-get install adduser python python-decoratortools rpm usermode yum python-iniparse
+    sudo apt-get install adduser python python-decoratortools rpm usermode python-iniparse
     # ... and now install mock from lucid (winces)
     wget http://mirrors.kernel.org/ubuntu/pool/universe/y/yum-utils/yum-utils_1.1.31-2_all.deb
     wget http://mirrors.kernel.org/ubuntu/pool/universe/m/mock/mock_1.1.33-1_all.deb
+    wget http://mirrors.kernel.org/ubuntu/pool/universe/y/yum/yum_3.4.3-2ubuntu1_all.deb
     # (sorry)
-    sudo dpkg -i --ignore-depends=yum yum-utils_1.1.31-2_all.deb
-    sudo dpkg -i --ignore-depends=yum mock_1.1.33-1_all.deb
+    sudo dpkg -i yum_3.4.3-2ubuntu1_all.deb
+    sudo dpkg -i yum-utils_1.1.31-2_all.deb
+    sudo dpkg -i mock_1.1.33-1_all.deb
     # oh, the horror
     sudo groupadd mock
     sudo mkdir /var/lib/mock
