@@ -1,9 +1,15 @@
 #!/bin/bash
 
 if [ -f /etc/redhat-release ]; then
-    INSTALL_PKG="yum install -y"
+    sudo yum install -y mock
 elif [ -f /etc/debian_version ]; then
-    INSTALL_PKG="apt-get install"
+    # Ooh, this is nasty
+    # Manually pre-install dependencies
+    sudo apt-get install adduser python python-decoratortools rpm usermode yum
+    # ... and now install mock from lucid (winces)
+    wget http://mirrors.kernel.org/ubuntu/pool/universe/m/mock/mock_0.9.7-3_all.deb
+    # (sorry)
+    sudo dpkg -i mock_0.9.7-3_all.deb
 else
     echo "I don't know what distro I'm on"
     exit 1
@@ -11,7 +17,5 @@ fi
 
 # This is annoying; Travis-CI uses ubuntu 12.04 for its build agents
 # and 12.04 doesn't have mock. 10.04 did, and 14.04 does, but not
-# anything in between. So we have to just trust that libpthreads and
-# libc versions are "good enough" on ubuntu to be able to run on
-# Fedora, CentOS, etc.
-make rpmbuild
+# anything in between. So the nastiness above ...
+make mock
