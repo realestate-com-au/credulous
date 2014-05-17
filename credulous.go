@@ -74,6 +74,10 @@ func getPrivateKey(c *cli.Context) *rsa.PrivateKey {
 	return privateKey
 }
 
+func getAccountAndUserName(c *cli.Context) (string,	 string) {
+	return c.String("account"), c.String("username")
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
@@ -119,13 +123,13 @@ func main() {
 				cli.StringFlag{"username, u", "", "IAM User"},
 			},
 			Action: func(c *cli.Context) {
-				
 				privateKey := getPrivateKey(c) 
-				cred, err := RetrieveCredentials(c.String("account"), c.String("username"), privateKey)
+				account, username := getAccountAndUserName(c)
+				cred, err := RetrieveCredentials(account, username, privateKey)
 				if err != nil {
 					panic_the_err(err)
 				}
-				err = ValidateCredentials(c.String("account"), c.String("username"), cred)
+				err = ValidateCredentials(account, username, cred)
 				if err != nil {
 					panic_the_err(err)
 				}
