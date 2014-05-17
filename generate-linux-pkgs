@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ -f /etc/redhat-release ]; then
+    INSTALL_PKG="yum install -y"
+elif [ -f /etc/debian_version ]; then
+    INSTALL_PKG="apt-get install"
+else
+    echo "I don't know what distro I'm on"
+    exit 1
+fi
+
+# make sure we have mock for RPMs
+sudo $INSTALL_PKG mock
+
+# mock most often requires special privs; we can't newgrp into
+# the mock group, because it spawns a subshell, so let's just
+# sudo it. Note I'm making assumptions about building under
+# Travis-CI here.
+
+sudo make rpm

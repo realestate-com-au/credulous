@@ -1,0 +1,8 @@
+#!/bin/bash
+
+case "x$TRAVIS_OS_NAME" in
+    xlinux) ./generate-linux-pkgs   ;;
+    xosx)   ./generate-osx-pkgs     ;;
+    x)      echo "Unknown build environment!"; exit 1 ;;
+    *)      echo "How did I get here?"; exit 1 ;;
+esac

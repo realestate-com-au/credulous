@@ -8,6 +8,7 @@ install:
   - go get -v -t ./... 
   - mkdir -p $HOME/gopath/bin
   - go install
+  - ./generate-pkgs
 
 script:
  - export PATH=$HOME/gopath/bin:$PATH

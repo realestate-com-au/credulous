@@ -24,6 +24,8 @@ RPM=$(NVR).x86_64.rpm
 
 all: mock
 
+rpm: mock
+
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:
 	tar czvf $(NAME)-$(VERSION).tar.gz --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
