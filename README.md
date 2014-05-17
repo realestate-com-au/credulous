@@ -20,6 +20,14 @@ workflow.
 
 Download your [platform specific app](https://github.com/realestate-com-au/credulous/releases)
 
+### Using brew
+
+If you are using brew you can use:
+
+``` 
+brew install https://raw.githubusercontent.com/realestate-com-au/credulous/master/brew/credulous.rb 
+```
+
 ## Usage
 
 Storing your current credentials in Credulous
