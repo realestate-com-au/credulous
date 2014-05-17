@@ -26,6 +26,6 @@ fi
 sudo make mock
 
 if [ $? -ne 0 ]; then
-    cat /var/lib/mock/epel-6-x86_64/result/build.log
+    cat /var/lib/mock/epel-6-x86_64/result/*
     exit 1
 fi
