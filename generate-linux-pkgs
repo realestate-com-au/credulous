@@ -24,3 +24,8 @@ fi
 # and 12.04 doesn't have mock. 10.04 did, and 14.04 does, but not
 # anything in between. So the nastiness above ...
 sudo make mock
+
+if [ $? -ne 0 ]; then
+    cat /var/lib/mock/epel-6-x86_64/result/build.log
+    exit 1
+fi
