@@ -136,6 +136,17 @@ func TestFindDefaultDir(t *testing.T) {
 	})
 }
 
+func TestValidateCredentials(t *testing.T) {
+	Convey("Test credential validation", t, func() {
+		// we can't really test ValidateCredentials directly,
+		// because it calls verifyUserAndAccount, which
+		// creates its own IAM connection. This is probably not
+		// the best way to have implemented that function.
+		// goamz provides an iamtest package, and we should
+		// use that.
+	})
+}
+
 func TestReadFile(t *testing.T) {
 	Convey("Test Read File", t, func() {
 		Convey("Valid Json returns Credential", func() {
