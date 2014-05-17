@@ -42,6 +42,38 @@ func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 	return decryptedPEM, nil
 }
 
+func getPrivateKey(c *cli.Context) *rsa.PrivateKey {
+	var privkeyFile string
+	var tmp []byte
+	var err error
+
+	if c.String("key") == "" {
+		privkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
+	} else {
+		privkeyFile = c.String("key")
+	}
+
+	if tmp, err = ioutil.ReadFile(privkeyFile); err != nil {
+		panic_the_err(err)
+	}
+
+	pemblock, _ := pem.Decode([]byte(tmp))
+	if x509.IsEncryptedPEMBlock(pemblock) {
+		if tmp, err = decryptPEM(pemblock, privkeyFile); err != nil {
+			panic_the_err(err)
+		}
+	} else {
+		log.Print("WARNING: Your private SSH key has no passphrase!")
+	}
+
+	key, err := ssh.ParseRawPrivateKey(tmp)
+	if err != nil {
+		panic_the_err(err)
+	}
+	privateKey := key.(*rsa.PrivateKey)
+	return privateKey
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
@@ -87,34 +119,8 @@ func main() {
 				cli.StringFlag{"username, u", "", "IAM User"},
 			},
 			Action: func(c *cli.Context) {
-				var privkeyFile string
-				var tmp []byte
-				var err error
-
-				if c.String("key") == "" {
-					privkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
-				} else {
-					privkeyFile = c.String("key")
-				}
-
-				if tmp, err = ioutil.ReadFile(privkeyFile); err != nil {
-					panic_the_err(err)
-				}
-
-				pemblock, _ := pem.Decode([]byte(tmp))
-				if x509.IsEncryptedPEMBlock(pemblock) {
-					if tmp, err = decryptPEM(pemblock, privkeyFile); err != nil {
-						panic_the_err(err)
-					}
-				} else {
-					log.Print("WARNING: Your private SSH key has no passphrase!")
-				}
-
-				key, err := ssh.ParseRawPrivateKey(tmp)
-				if err != nil {
-					panic_the_err(err)
-				}
-				privateKey := key.(*rsa.PrivateKey)
+				
+				privateKey := getPrivateKey(c) 
 				cred, err := RetrieveCredentials(c.String("account"), c.String("username"), privateKey)
 				if err != nil {
 					panic_the_err(err)
