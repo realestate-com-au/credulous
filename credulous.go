@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/pem"
 	"fmt"
+	"strings"
 	"io/ioutil"
 	"log"
 	"os"
@@ -75,7 +76,12 @@ func getPrivateKey(c *cli.Context) *rsa.PrivateKey {
 }
 
 func getAccountAndUserName(c *cli.Context) (string,	 string) {
-	return c.String("account"), c.String("username")
+	if c.String("credentials") != "" {
+		result := strings.Split(c.String("credentials"), "@")
+		return result[1], result[0]
+	} else {
+		return c.String("account"), c.String("username")
+	}
 }
 
 func main() {
@@ -121,6 +127,7 @@ func main() {
 				cli.StringFlag{"account, a", "", "AWS Account alias or id"},
 				cli.StringFlag{"key, k", "", "SSH private key"},
 				cli.StringFlag{"username, u", "", "IAM User"},
+				cli.StringFlag{"credentials, c", "", "Credentials, for example username@account"},
 			},
 			Action: func(c *cli.Context) {
 				privateKey := getPrivateKey(c) 
