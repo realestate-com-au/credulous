@@ -18,6 +18,4 @@ fi
 # This is annoying; Travis-CI uses ubuntu 12.04 for its build agents
 # and 12.04 doesn't have mock. 10.04 did, and 14.04 does, but not
 # anything in between. So the nastiness above ...
-# Now add to this that mock requires special group privileges, and we
-# can't newgrp to run a command, so let's use sudo instead
-sudo -g mock make mock
+sudo make mock
