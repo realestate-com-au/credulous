@@ -38,6 +38,8 @@ Displaying a set of credentials from Credulous
 
 ## Development
 
+[![Build Status](https://travis-ci.org/realestate-com-au/credulous.svg)](https://travis-ci.org/realestate-com-au/credulous)
+
 Required tools:
 * [go](http://golang.org)
 * [git](http://git-scm.com)
