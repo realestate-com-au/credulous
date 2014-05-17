@@ -1,8 +1,18 @@
 #!/bin/bash
 
 case "x$TRAVIS_OS_NAME" in
-    xlinux) ./generate-linux-pkgs   ;;
-    xosx)   ./generate-osx-pkgs     ;;
-    x)      echo "Unknown build environment!"; env; exit 1 ;;
-    *)      echo "How did I get here?"; exit 1 ;;
+    xlinux) ./generate-linux-pkgs; exit $? ;;
+    xosx)   ./generate-osx-pkgs; exit $? ;;
+    *)      echo "TRAVIS_OS_NAME not set" ;;
 esac
+
+case "x$_system_type" in
+    x[Ll]inux) ./generate-linux-pkgs; exit $? ;;
+    x[Oo][Ss][Xx]) ./generate-osx-pkgs; exit $? ;;
+    *)  echo "_system_type not set" ;;
+esac
+
+echo "I can't work out what build environment this is"
+echo "Here's the runtime environment, if it helps:"
+env
+exit 1
