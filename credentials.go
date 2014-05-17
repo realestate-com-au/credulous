@@ -25,23 +25,31 @@ type Credential struct {
 	FingerPrint      string
 }
 
-func readCredentialFile(fileName string, privkey *rsa.PrivateKey) *Credential {
+func readCredentialFile(fileName string, privkey *rsa.PrivateKey) (*Credential, error) {
 	b, err := ioutil.ReadFile(fileName)
-	panic_the_err(err)
+	if err != nil {
+		return nil, err
+	}
 
 	var credential Credential
 	err = json.Unmarshal(b, &credential)
-	panic_the_err(err)
+	if err != nil {
+		return nil, err
+	}
 
 	decoded, err := CredulousDecode(credential.KeyId, credential.Salt, privkey)
-	panic_the_err(err)
+	if err != nil {
+		return nil, err
+	}
 	credential.KeyId = decoded
 
 	decoded, err = CredulousDecode(credential.SecretKey, credential.Salt, privkey)
-	panic_the_err(err)
+	if err != nil {
+		return nil, err
+	}
 	credential.SecretKey = decoded
 
-	return &credential
+	return &credential, nil
 }
 
 func (cred Credential) WriteToDisk(filename string) {
@@ -120,7 +128,24 @@ func findDefaultDir(fl FileLister) (string, error) {
 	return dirs[0].Name(), nil
 }
 
-func RetrieveCredentials(alias string, username string, privkey *rsa.PrivateKey) Credential {
+func ValidateCredentials(alias string, username string, cred Credential) error {
+	if cred.IamUsername != username {
+		err := errors.New("FATAL: username in credential does not match requested username")
+		return err
+	}
+	if cred.AccountAliasOrId != alias {
+		err := errors.New("FATAL: account alias in credential does not match requested alias")
+		return err
+	}
+
+	err := verifyUserAndAccount(cred)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RetrieveCredentials(alias string, username string, privkey *rsa.PrivateKey) (Credential, error) {
 	rootPath := filepath.Join(getRootPath(), "local")
 	rootDir, err := os.Open(rootPath)
 	if err != nil {
@@ -146,7 +171,12 @@ func RetrieveCredentials(alias string, username string, privkey *rsa.PrivateKey)
 
 	fullPath := filepath.Join(rootPath, alias, username)
 	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
-	return *readCredentialFile(filePath, privkey)
+	cred, err := readCredentialFile(filePath, privkey)
+	if err != nil {
+		return Credential{}, err
+	}
+
+	return *cred, nil
 }
 
 func latestFileInDir(dir string) os.FileInfo {

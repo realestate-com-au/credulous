@@ -115,7 +115,14 @@ func main() {
 					panic_the_err(err)
 				}
 				privateKey := key.(*rsa.PrivateKey)
-				cred := RetrieveCredentials(c.String("account"), c.String("username"), privateKey)
+				cred, err := RetrieveCredentials(c.String("account"), c.String("username"), privateKey)
+				if err != nil {
+					panic_the_err(err)
+				}
+				err = ValidateCredentials(c.String("account"), c.String("username"), cred)
+				if err != nil {
+					panic_the_err(err)
+				}
 				cred.Display(os.Stdout)
 			},
 		},

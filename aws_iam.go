@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 
 	"github.com/realestate-com-au/goamz/iam"
 	"launchpad.net/goamz/aws"
@@ -38,36 +37,36 @@ func getAWSAccountAlias(key_id, secret string) (string, error) {
 	return response.Aliases[0], nil
 }
 
-func verify_account(alias string, iam_instance *iam.IAM) (bool, error) {
+func verify_account(alias string, iam_instance *iam.IAM) error {
 	// TODO: the GetAccountAlias function needs to be implemented in goamz/iam
 	response, err := iam_instance.ListAccountAliases()
 	if err != nil {
-		log.Fatal("Could not ListAccountAliases")
+		return err
 	}
 	for _, acct_alias := range response.Aliases {
 		if acct_alias == alias {
-			return true, nil
+			return nil
 		}
 	}
-	log.Print("Cannot verify account: does not match alias " + alias)
-	return false, nil
+	err = errors.New("Cannot verify account: does not match alias " + alias)
+	return err
 }
 
-func verify_user(username string, iam_instance *iam.IAM) (bool, error) {
+func verify_user(username string, iam_instance *iam.IAM) error {
 	response, err := iam_instance.AccessKeys(username)
 	if err != nil {
-		log.Fatal("Cannot get AccessKeys")
+		return err
 	}
 	for _, key := range response.AccessKeys {
 		if key.Id == iam_instance.AccessKey {
-			return true, nil
+			return nil
 		}
 	}
-	log.Print("Cannot verify user: access keys are not for user " + username)
-	return false, nil
+	err = errors.New("Cannot verify user: access keys are not for user " + username)
+	return err
 }
 
-func verifyUserAndAccount(creds Credential) (bool, error) {
+func verifyUserAndAccount(creds Credential) error {
 	// need to check both the username and the account alias for the
 	// supplied creds match the passed-in username and account alias
 	auth := aws.Auth{creds.KeyId, creds.SecretKey}
@@ -75,24 +74,16 @@ func verifyUserAndAccount(creds Credential) (bool, error) {
 	instance := iam.New(auth, aws.APSoutheast2)
 
 	// Make sure the account is who we expect
-	result, err := verify_account(creds.AccountAliasOrId, instance)
+	err := verify_account(creds.AccountAliasOrId, instance)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	if !result {
-		log.Fatal("Could not verify account")
+		return err
 	}
 
 	// Make sure the user is who we expect
-	result, err = verify_user(creds.IamUsername, instance)
+	err = verify_user(creds.IamUsername, instance)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	if !result {
-		log.Fatal("Could not verify user")
-	}
-
-	return true, nil
+	return nil
 }

@@ -139,14 +139,13 @@ func TestFindDefaultDir(t *testing.T) {
 func TestReadFile(t *testing.T) {
 	Convey("Test Read File", t, func() {
 		Convey("Valid Json returns Credential", func() {
-
 			tmp, err := ioutil.ReadFile("testkey")
 			panic_the_err(err)
 			key, err := ssh.ParseRawPrivateKey(tmp)
 			panic_the_err(err)
 			privkey := key.(*rsa.PrivateKey)
 
-			cred := readCredentialFile("credential.json", privkey)
+			cred, _ := readCredentialFile("credential.json", privkey)
 			So(cred.LifeTime, ShouldEqual, 22)
 		})
 		Convey("Credentials display correctly", func() {
