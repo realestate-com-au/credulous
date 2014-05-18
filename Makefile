@@ -19,9 +19,8 @@ NVR=$(NAME)-$(VERSION)-$(RELEASE)
 MOCK_SRPM=$(NVR).src.rpm
 RPM=$(NVR).x86_64.rpm
 
-BINARY=credulous
-
 .DEFAULT: all
+.PHONY: debianpkg
 
 all: mock
 
@@ -41,7 +40,7 @@ rpmbuild: sources
 sources:
 	tar czvf $(NAME)-$(VERSION).tar.gz --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
 
-debianpkg: $(BINARY)
+debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
 	mkdir -p debian-pkg/DEBIAN/usr/bin
