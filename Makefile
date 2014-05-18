@@ -19,6 +19,8 @@ NVR=$(NAME)-$(VERSION)-$(RELEASE)
 MOCK_SRPM=$(NVR).src.rpm
 RPM=$(NVR).x86_64.rpm
 
+BINARY=credulous
+
 .DEFAULT: all
 
 all: mock
@@ -38,6 +40,15 @@ rpmbuild: sources
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:
 	tar czvf $(NAME)-$(VERSION).tar.gz --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
+
+debianpkg: $(BINARY)
+	@echo Build Debian packages
+	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
+	mkdir -p debian-pkg/DEBIAN/usr/bin
+	cp $(BINARY) debian-pkg/DEBIAN/usr/bin
+	chmod 0755 debian-pkg/DEBIAN/usr/bin/$(BINARY)
+	dpkg-deb --build debian-pkg
+	mv debian-pkg.deb $(NAME)_$(VERSION)_amd64.deb
 
 mock: mock-rpm
 	@echo "BUILD COMPLETE; RPMS are in ."

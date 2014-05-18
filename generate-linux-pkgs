@@ -34,3 +34,6 @@ if [ $? -ne 0 ]; then
     cat /var/lib/mock/epel-6-x86_64/result/*.log
     exit 1
 fi
+
+# This should go fairly smoothly, give we're building a debian pkg on a debian box
+sudo make debianpkg

@@ -1,0 +1,6 @@
+Package: credulous
+Architecture: amd64
+Maintainer: Colin Panisset <colin.panisset@rea-group.com>
+Priority: optional
+Version: ==VERSION==
+Description: Credulous securely manages AWS credentials
