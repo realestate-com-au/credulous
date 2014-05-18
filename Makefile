@@ -44,8 +44,8 @@ debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
 	mkdir -p debian-pkg/DEBIAN/usr/bin
-	cp $(BINARY) debian-pkg/DEBIAN/usr/bin
-	chmod 0755 debian-pkg/DEBIAN/usr/bin/$(BINARY)
+	cp credulous debian-pkg/DEBIAN/usr/bin
+	chmod 0755 debian-pkg/DEBIAN/usr/bin/credulous
 	dpkg-deb --build debian-pkg
 	mv debian-pkg.deb $(NAME)_$(VERSION)_amd64.deb
 
