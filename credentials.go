@@ -11,6 +11,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/realestate-com-au/goamz/aws"
+	"github.com/realestate-com-au/goamz/iam"
+
 	"code.google.com/p/go.crypto/ssh"
 )
 
@@ -65,7 +68,12 @@ func (cred Credential) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n", cred.KeyId, cred.SecretKey)
 }
 
-func SaveCredentials(username, alias, id, secret string, pubkey ssh.PublicKey) {
+func SaveCredentials(id, secret string, pubkey ssh.PublicKey) {
+	auth := aws.Auth{AccessKey: id, SecretKey: secret}
+	instance := iam.New(auth, aws.APSoutheast2)
+	username, _ := getAWSUsername(instance)
+	alias, _ := getAWSAccountAlias(instance)
+	fmt.Printf("saving credentials for %s@%s\n", username, alias)
 	random_salt := RandomSaltGenerator{}
 	id_encoded, generated_salt, err := CredulousEncode(id, &random_salt, pubkey)
 	static_salt := StaticSaltGenerator{salt: generated_salt}
@@ -79,7 +87,7 @@ func SaveCredentials(username, alias, id, secret string, pubkey ssh.PublicKey) {
 		IamUsername:      username,
 		Salt:             generated_salt,
 	}
-	key_create_date, _ := getKeyCreateDate(id, secret)
+	key_create_date, _ := getKeyCreateDate(instance)
 	t, err := time.Parse("2006-01-02T15:04:05Z", key_create_date)
 	panic_the_err(err)
 	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", t.Unix(), id[12:]))

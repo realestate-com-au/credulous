@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/pem"
 	"fmt"
-	"strings"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"crypto/rsa"
 	"crypto/x509"
@@ -75,7 +75,7 @@ func getPrivateKey(c *cli.Context) *rsa.PrivateKey {
 	return privateKey
 }
 
-func getAccountAndUserName(c *cli.Context) (string,	 string) {
+func getAccountAndUserName(c *cli.Context) (string, string) {
 	if c.String("credentials") != "" {
 		result := strings.Split(c.String("credentials"), "@")
 		return result[1], result[0]
@@ -111,13 +111,10 @@ func main() {
 					fmt.Println("Can't save, no credentials in the environment")
 					os.Exit(1)
 				}
-				username, _ := getAWSUsername(AWSAccessKeyId, AWSSecretAccessKey)
-				alias, _ := getAWSAccountAlias(AWSAccessKeyId, AWSSecretAccessKey)
-				fmt.Printf("saving credentials for %s@%s\n", username, alias)
 				pubkeyString, err := ioutil.ReadFile(pubkeyFile)
 				panic_the_err(err)
 				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkeyString))
-				SaveCredentials(username, alias, AWSAccessKeyId, AWSSecretAccessKey, pubkey)
+				SaveCredentials(AWSAccessKeyId, AWSSecretAccessKey, pubkey)
 			},
 		},
 		{
@@ -130,7 +127,7 @@ func main() {
 				cli.StringFlag{"credentials, c", "", "Credentials, for example username@account"},
 			},
 			Action: func(c *cli.Context) {
-				privateKey := getPrivateKey(c) 
+				privateKey := getPrivateKey(c)
 				account, username := getAccountAndUserName(c)
 				cred, err := RetrieveCredentials(account, username, privateKey)
 				if err != nil {
