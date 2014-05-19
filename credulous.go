@@ -1,16 +1,13 @@
 package main
 
 import (
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"crypto/rsa"
-	"crypto/x509"
 
 	"code.google.com/p/go.crypto/ssh"
 
@@ -43,36 +40,13 @@ func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 	return decryptedPEM, nil
 }
 
-func getPrivateKey(c *cli.Context) *rsa.PrivateKey {
-	var privkeyFile string
-	var tmp []byte
-	var err error
-
+func getPrivateKey(c *cli.Context) (filename string) {
 	if c.String("key") == "" {
-		privkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
+		filename = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa")
 	} else {
-		privkeyFile = c.String("key")
+		filename = c.String("key")
 	}
-
-	if tmp, err = ioutil.ReadFile(privkeyFile); err != nil {
-		panic_the_err(err)
-	}
-
-	pemblock, _ := pem.Decode([]byte(tmp))
-	if x509.IsEncryptedPEMBlock(pemblock) {
-		if tmp, err = decryptPEM(pemblock, privkeyFile); err != nil {
-			panic_the_err(err)
-		}
-	} else {
-		log.Print("WARNING: Your private SSH key has no passphrase!")
-	}
-
-	key, err := ssh.ParseRawPrivateKey(tmp)
-	if err != nil {
-		panic_the_err(err)
-	}
-	privateKey := key.(*rsa.PrivateKey)
-	return privateKey
+	return filename
 }
 
 func getAccountAndUserName(c *cli.Context) (string, string) {
@@ -127,9 +101,9 @@ func main() {
 				cli.StringFlag{"credentials, c", "", "Credentials, for example username@account"},
 			},
 			Action: func(c *cli.Context) {
-				privateKey := getPrivateKey(c)
+				keyfile := getPrivateKey(c)
 				account, username := getAccountAndUserName(c)
-				cred, err := RetrieveCredentials(account, username, privateKey)
+				cred, err := RetrieveCredentials(account, username, keyfile)
 				if err != nil {
 					panic_the_err(err)
 				}

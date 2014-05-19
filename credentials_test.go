@@ -1,13 +1,9 @@
 package main
 
 import (
-	"crypto/rsa"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
-
-	"code.google.com/p/go.crypto/ssh"
 	. "github.com/smartystreets/goconvey/convey"
 	// "io/ioutil"
 	// "fmt"
@@ -150,13 +146,7 @@ func TestValidateCredentials(t *testing.T) {
 func TestReadFile(t *testing.T) {
 	Convey("Test Read File", t, func() {
 		Convey("Valid Json returns Credential", func() {
-			tmp, err := ioutil.ReadFile("testkey")
-			panic_the_err(err)
-			key, err := ssh.ParseRawPrivateKey(tmp)
-			panic_the_err(err)
-			privkey := key.(*rsa.PrivateKey)
-
-			cred, _ := readCredentialFile("credential.json", privkey)
+			cred, _ := readCredentialFile("credential.json", "testkey")
 			So(cred.LifeTime, ShouldEqual, 22)
 		})
 		Convey("Credentials display correctly", func() {

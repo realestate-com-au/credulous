@@ -1,18 +1,22 @@
 package main
 
 import (
-	"crypto/rsa"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/realestate-com-au/goamz/aws"
 	"github.com/realestate-com-au/goamz/iam"
+
+	"crypto/rsa"
+	"crypto/x509"
 
 	"code.google.com/p/go.crypto/ssh"
 )
@@ -28,7 +32,31 @@ type Credential struct {
 	FingerPrint      string
 }
 
-func readCredentialFile(fileName string, privkey *rsa.PrivateKey) (*Credential, error) {
+func loadPrivateKey(filename string) (privateKey *rsa.PrivateKey, err error) {
+	var tmp []byte
+
+	if tmp, err = ioutil.ReadFile(filename); err != nil {
+		return &rsa.PrivateKey{}, err
+	}
+
+	pemblock, _ := pem.Decode([]byte(tmp))
+	if x509.IsEncryptedPEMBlock(pemblock) {
+		if tmp, err = decryptPEM(pemblock, filename); err != nil {
+			return &rsa.PrivateKey{}, err
+		}
+	} else {
+		log.Print("WARNING: Your private SSH key has no passphrase!")
+	}
+
+	key, err := ssh.ParseRawPrivateKey(tmp)
+	if err != nil {
+		return &rsa.PrivateKey{}, err
+	}
+	privateKey = key.(*rsa.PrivateKey)
+	return privateKey, nil
+}
+
+func readCredentialFile(fileName string, keyfile string) (*Credential, error) {
 	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, err
@@ -40,13 +68,18 @@ func readCredentialFile(fileName string, privkey *rsa.PrivateKey) (*Credential, 
 		return nil, err
 	}
 
-	decoded, err := CredulousDecode(credential.KeyId, credential.Salt, privkey)
+	privKey, err := loadPrivateKey(keyfile)
+	if err != nil {
+		return nil, err
+	}
+
+	decoded, err := CredulousDecode(credential.KeyId, credential.Salt, privKey)
 	if err != nil {
 		return nil, err
 	}
 	credential.KeyId = decoded
 
-	decoded, err = CredulousDecode(credential.SecretKey, credential.Salt, privkey)
+	decoded, err = CredulousDecode(credential.SecretKey, credential.Salt, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +186,7 @@ func ValidateCredentials(alias string, username string, cred Credential) error {
 	return nil
 }
 
-func RetrieveCredentials(alias string, username string, privkey *rsa.PrivateKey) (Credential, error) {
+func RetrieveCredentials(alias string, username string, keyfile string) (Credential, error) {
 	rootPath := filepath.Join(getRootPath(), "local")
 	rootDir, err := os.Open(rootPath)
 	if err != nil {
@@ -179,7 +212,7 @@ func RetrieveCredentials(alias string, username string, privkey *rsa.PrivateKey)
 
 	fullPath := filepath.Join(rootPath, alias, username)
 	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
-	cred, err := readCredentialFile(filePath, privkey)
+	cred, err := readCredentialFile(filePath, keyfile)
 	if err != nil {
 		return Credential{}, err
 	}
