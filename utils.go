@@ -8,7 +8,7 @@ import (
 
 func panic_the_err(err error) {
 	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
 	}
 }
