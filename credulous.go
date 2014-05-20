@@ -50,7 +50,11 @@ func getPrivateKey(c *cli.Context) (filename string) {
 }
 
 func getAccountAndUserName(c *cli.Context) (string, string) {
-	if c.String("credentials") != "" {
+  // XXX Check input for errors
+  if len(c.Args()) > 0 {
+		result := strings.Split(c.Args()[0], "@")
+		return result[1], result[0]
+  } else if c.String("credentials") != "" {
 		result := strings.Split(c.String("credentials"), "@")
 		return result[1], result[0]
 	} else {
