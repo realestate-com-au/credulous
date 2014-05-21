@@ -75,6 +75,10 @@ func main() {
 			Usage: "Save AWS credentials for a file.",
 			Flags: []cli.Flag{
 				cli.StringFlag{"key, k", "", "SSH public key"},
+				cli.BoolFlag{"force, f", "Force saving without validating username or account.\n" +
+					"\tYou MUST specify -u username -a account"},
+				cli.StringFlag{"username, u", "", "Username (for use with '--force')"},
+				cli.StringFlag{"account, a", "", "Account alias (for use with '--force')"},
 			},
 			Action: func(c *cli.Context) {
 				var pubkeyFile string
@@ -82,6 +86,35 @@ func main() {
 					pubkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
 				} else {
 					pubkeyFile = c.String("key")
+				}
+
+				var username, account string
+
+				if (c.String("username") == "" || c.String("account") == "") && c.Bool("force") {
+					fmt.Println("Must specify both username and account with force")
+					os.Exit(1)
+				}
+
+				// if username OR account were specified, but not both, complain
+				if (c.String("username") != "" && c.String("account") == "") ||
+					(c.String("username") == "" && c.String("account") != "") {
+					if c.Bool("force") {
+						fmt.Println("Must specify both username and account for force save")
+					} else {
+						fmt.Println("Must use force save when specifying username or account")
+					}
+					os.Exit(1)
+				}
+
+				// if username/account were specified, but force wasn't set, complain
+				if c.String("username") != "" && c.String("account") != "" {
+					if !c.Bool("force") {
+						fmt.Println("Cannot specify username and/or account without force")
+						os.Exit(1)
+					} else {
+						username = c.String("username")
+						account = c.String("account")
+					}
 				}
 
 				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
@@ -93,7 +126,7 @@ func main() {
 				pubkeyString, err := ioutil.ReadFile(pubkeyFile)
 				panic_the_err(err)
 				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkeyString))
-				SaveCredentials(AWSAccessKeyId, AWSSecretAccessKey, pubkey)
+				SaveCredentials(AWSAccessKeyId, AWSSecretAccessKey, username, account, pubkey)
 			},
 		},
 		{

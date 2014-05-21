@@ -101,11 +101,15 @@ func (cred Credential) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n", cred.KeyId, cred.SecretKey)
 }
 
-func SaveCredentials(id, secret string, pubkey ssh.PublicKey) {
+func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) {
 	auth := aws.Auth{AccessKey: id, SecretKey: secret}
 	instance := iam.New(auth, aws.APSoutheast2)
-	username, _ := getAWSUsername(instance)
-	alias, _ := getAWSAccountAlias(instance)
+	if username == "" {
+		username, _ = getAWSUsername(instance)
+	}
+	if alias == "" {
+		alias, _ = getAWSAccountAlias(instance)
+	}
 	fmt.Printf("saving credentials for %s@%s\n", username, alias)
 	random_salt := RandomSaltGenerator{}
 	id_encoded, generated_salt, err := CredulousEncode(id, &random_salt, pubkey)
