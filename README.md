@@ -2,8 +2,8 @@
 
 **credulous** is a command line tool that manages **AWS (IAM) Credentials securely**. The aim is
 to encrypt the credentials using a user's **public SSH Key** so that only the user who has the
-corresponding **private SSH key** is able to see and use them. Furthermore the tool will also 
-enable the user to **easily rotate** their current credentials without breaking the user's current 
+corresponding **private SSH key** is able to see and use them. Furthermore the tool will also
+enable the user to **easily rotate** their current credentials without breaking the user's current
 workflow.
 
 ![Credulous Security](https://github.com/realestate-com-au/credulous/raw/master/site/credulous-security.png)
@@ -20,13 +20,21 @@ workflow.
 
 Download your [platform specific app](https://github.com/realestate-com-au/credulous/releases)
 
+
 ### Using brew
 
 If you are using brew you can use:
 
-``` 
-brew install https://raw.githubusercontent.com/realestate-com-au/credulous/master/brew/credulous.rb 
 ```
+brew install https://raw.githubusercontent.com/realestate-com-au/credulous/master/brew/credulous.rb
+```
+
+### Bash Completion
+
+Bash completion for subcommands and credentials is available (but waiting on inclusion in packages).
+
+Till then, `source credulous.bash_completion` will do the trick. OSX users will need to `brew install bash_completion`
+
 
 ## Usage
 
