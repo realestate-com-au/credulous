@@ -74,13 +74,13 @@ func getAccountAndUserName(c *cli.Context) (string, string, error) {
 func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
-	app.Usage = "Use it!"
+	app.Usage = "Secure AWS Credential Management"
 	app.Version = "0.1.3"
 
 	app.Commands = []cli.Command{
 		{
 			Name:  "save",
-			Usage: "Save AWS credentials for a file.",
+			Usage: "Save AWS credentials",
 			Flags: []cli.Flag{
 				cli.StringFlag{"key, k", "", "SSH public key"},
 				cli.BoolFlag{"force, f", "Force saving without validating username or account.\n" +
@@ -140,7 +140,7 @@ func main() {
 		},
 		{
 			Name:  "source",
-			Usage: "Source AWS credentials from a file.",
+			Usage: "Source AWS credentials",
 			Flags: []cli.Flag{
 				cli.StringFlag{"account, a", "", "AWS Account alias or id"},
 				cli.StringFlag{"key, k", "", "SSH private key"},
@@ -176,7 +176,7 @@ func main() {
 		},
 		{
 			Name:  "list",
-			Usage: "List the sets of available credentials",
+			Usage: "List available AWS credentials",
 			Action: func(c *cli.Context) {
 				rootDir, err := os.Open(getRootPath())
 				if err != nil {
