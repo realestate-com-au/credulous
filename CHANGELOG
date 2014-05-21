@@ -1,0 +1,211 @@
+Changelog
+=========
+
+%%version%% (unreleased)
+------------------------
+
+- Added bash_completion to README.md. [Mike Bailey]
+
+- Added bash_completion [issue #34] [Mike Bailey]
+
+  $ credulous source m[TAB] mbailey@mbailey            mike.bailey@non-
+  prod-corp
+
+- Emit warning message when force-saving (Issue #20) [Colin Panisset]
+
+- Permit force saving of credentials without validating username@account
+  (Issue #20) [Colin Panisset]
+
+- Pass errors back when checking account and username. [Colin Panisset]
+
+- Add a deploy component so that Travis can upload packages to GitHub.
+  [Colin Panisset]
+
+- Credulous source username@account_alias works. [Mike Bailey]
+
+  We need to add some error handing and generally tidy this up.
+
+- Write errors to STDERR. [Mike Bailey]
+
+- Refactor loading private keys so we don't prompt unnecessarily (Issue
+  #35) [Colin Panisset]
+
+- Don't commit ctags file. [Colin Panisset]
+
+- Refactor aws_iam to make it testable, and add some tests; fix Issue
+  #33. [Colin Panisset]
+
+- Merge pull request #30 from dziemid/master. [nonspecialist]
+
+  Example how to install using brew
+
+- Need to copy binary from install location (Issue #27) [Colin Panisset]
+
+- Makefile fix (Issue #27) [Colin Panisset]
+
+- Use a phony target to force debian pkg building (Issue #27) [Colin
+  Panisset]
+
+- Add steps to build debian package (Issue #27) [Colin Panisset]
+
+- Deps for yum. [Colin Panisset]
+
+- Now we need a later version of yum too ... is this getting silly?
+  [Colin Panisset]
+
+- Actually change the order of package installation (I must be tired)
+  [Colin Panisset]
+
+- When installing packages manually, order is important. [Colin
+  Panisset]
+
+- Newer yum-utils relies on python-iniparse. [Colin Panisset]
+
+- Need to match pkg versions of of mock and yum-utils. [Colin Panisset]
+
+- Just cat the logs. [Colin Panisset]
+
+- Cat all the logs. [Colin Panisset]
+
+- Let's try again to work out why mock builds aren't working. [Colin
+  Panisset]
+
+- Supporting credulous source -c username@account. [Greg Dziemidowicz]
+
+- Extracted getAccountAndUserName. [Greg Dziemidowicz]
+
+- Extracted function for getting a private key. [Greg Dziemidowicz]
+
+- Updated brew formula to version 0.1.3. [Greg Dziemidowicz]
+
+- Adding brew formula for credulous. [Greg Dziemidowicz]
+
+  Usage: brew install
+  https://raw.githubusercontent.com/realestate-com-
+  au/credulous/brew/creadulous.rb  It's in our repo, so we can control
+  where it points.
+
+- Remove pkg step from Travis since it's broken atm. [nonspecialist]
+
+- Don't try to be so clever in finding the mock result dir. [Colin
+  Panisset]
+
+- Ubuntu puts readlink in /bin instead of /usr/bin. [Colin Panisset]
+
+- The horror ... the horror. [Colin Panisset]
+
+- New mock pkg apparently doesn't create a mock group. [Colin Panisset]
+
+- More atrocities. [Colin Panisset]
+
+- Go to later version of mock, since lucid could not build EPEL 6.
+  [Colin Panisset]
+
+- Try some real nastiness; install mock from lucid, since it's just
+  python. [Colin Panisset]
+
+- Ubuntu 12.04 has no 'mock', so fake it with rpmbuild. This may be a
+  bad idea. [Colin Panisset]
+
+- Try harder to determine the build environment. [Colin Panisset]
+
+- Find what the build time environment actually looks like. [Colin
+  Panisset]
+
+- Add scripts to have Travis build packages. [Colin Panisset]
+
+- Adding build status to README. [Greg Dziemidowicz]
+
+- Fix missing newline at eof. [Colin Panisset]
+
+- Comments on why it's hard to test credential validation at the moment.
+  [Colin Panisset]
+
+- Merge pull request #28 from dziemid/master. [nonspecialist]
+
+  Adding travis-ci config (thanks Greg)
+
+- Verify retrieved credentials against what AWS says they are (Issue
+  #15) [Colin Panisset]
+
+0.1.3 (2014-05-16)
+------------------
+
+- Version update to 0.1.3, new features. [Colin Panisset]
+
+- Don't commit RPMs or tarballs. [Colin Panisset]
+
+- Makefile and specfile for building RPMs. [Colin Panisset]
+
+- Slight refactor to make testing easier; test the zero case for
+  listAvailableCredentals. [Colin Panisset]
+
+- Add tests for getDirs. [Colin Panisset]
+
+- Add basic functionality to list stored credentials (Issue #18) [Colin
+  Panisset]
+
+- Return a default user@account credentials if there's only one choice
+  (Issue #12) [Colin Panisset]
+
+- Corrected the command name in runtime help. [Aaron Wigley]
+
+- Do not need the extra carriage return. [Colin Panisset]
+
+- Merge pull request #17 from realestate-com-au/nicer_error_messages.
+  [Paul Van de Vreede]
+
+  Nicer error messages.
+
+- Updating README with working example. [Greg Dziemidowicz]
+
+  how to use credulous
+
+0.1.2 (2014-05-13)
+------------------
+
+- Capture this important feature. [Colin Panisset]
+
+- Have decryptPEM handle different files, and make bits more idiomatic.
+  [Colin Panisset]
+
+- Accept passphrase on same line as prompt. [Mike Bailey]
+
+  I'm just a sucker for a pretty (command line inter)face.
+  https://www.youtube.com/watch?v=xet_BhT9Uqg
+
+- Keep msgs to STDERR so eval STDOUT in shell func. [Mike Bailey]
+
+- Pass command line args to credulous. [Mike Bailey]
+
+  User may want to specify account or username
+
+- You need GOPATH set in environment. [Mike Bailey]
+
+- Don't break when saving if there are no credentials in the environment
+  (Issue #9) [Colin Panisset]
+
+- Make variable names more consistent with Go style. [Colin Panisset]
+
+- Allow choosing an SSH private key on the command-line. [Colin
+  Panisset]
+
+- Handle encrypted SSH private keys (Issue #8) [Colin Panisset]
+
+- Use interface for generating salts so that we can both test and re-use
+  the same salt for key_id and secret. [Colin Panisset]
+
+- Percolate errors back up the stack instead of panicing. [Colin
+  Panisset]
+
+- Generate the salt randomly each time. [Colin Panisset]
+
+- Allow user to specify SSH pubkey to save creds with. [Mike Bailey]
+
+  We cannot currently decrypt using passphrase protected private keys.
+  We need to fix this ASAP.
+
+- Initial commit. [Colin Panisset]
+
+
+CHANGELOG generated using gitchangelog https://pypi.python.org/pypi/gitchangelog
