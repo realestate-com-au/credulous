@@ -112,6 +112,7 @@ func main() {
 						fmt.Println("Cannot specify username and/or account without force")
 						os.Exit(1)
 					} else {
+						fmt.Println("WARNING: saving credentials without verifying username or account alias")
 						username = c.String("username")
 						account = c.String("account")
 					}
