@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -49,16 +50,16 @@ func getPrivateKey(c *cli.Context) (filename string) {
 	return filename
 }
 
-func getAccountAndUserName(c *cli.Context) (string, string) {
-  // XXX Check input for errors
-  if len(c.Args()) > 0 {
-		result := strings.Split(c.Args()[0], "@")
-		return result[1], result[0]
-  } else if c.String("credentials") != "" {
+func getAccountAndUserName(c *cli.Context) (string, string, error) {
+	if c.String("credentials") != "" {
 		result := strings.Split(c.String("credentials"), "@")
-		return result[1], result[0]
+		if len(result) < 2 {
+			err := errors.New("Invalid account format; please specify <username>@<account>")
+			return "", "", err
+		}
+		return result[1], result[0], nil
 	} else {
-		return c.String("account"), c.String("username")
+		return c.String("account"), c.String("username"), nil
 	}
 }
 
@@ -106,7 +107,10 @@ func main() {
 			},
 			Action: func(c *cli.Context) {
 				keyfile := getPrivateKey(c)
-				account, username := getAccountAndUserName(c)
+				account, username, err := getAccountAndUserName(c)
+				if err != nil {
+					panic_the_err(err)
+				}
 				cred, err := RetrieveCredentials(account, username, keyfile)
 				if err != nil {
 					panic_the_err(err)
