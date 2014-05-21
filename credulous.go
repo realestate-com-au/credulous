@@ -51,6 +51,14 @@ func getPrivateKey(c *cli.Context) (filename string) {
 }
 
 func getAccountAndUserName(c *cli.Context) (string, string, error) {
+  if len(c.Args()) > 0 {
+    result := strings.Split(c.Args()[0], "@")
+		if len(result) < 2 {
+			err := errors.New("Invalid account format; please specify <username>@<account>")
+			return "", "", err
+    }
+    return result[1], result[0], nil
+  }
 	if c.String("credentials") != "" {
 		result := strings.Split(c.String("credentials"), "@")
 		if len(result) < 2 {
