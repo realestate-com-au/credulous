@@ -1,0 +1,29 @@
+_credulous()
+{
+    local cur prev opts base
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    #
+    #  Commands we'll complete
+    #
+    commands="display save source list"
+
+    #
+    #  Complete the arguments to some (well, one!) of the commands.
+    #
+    case "${prev}" in
+        source)
+            local creds=$(credulous list)
+            COMPREPLY=( $(compgen -W "${creds}" -- ${cur}) )
+            return 0
+            ;;
+        *)
+            COMPREPLY=($(compgen -W "${commands}" -- ${cur}))
+            return 0
+            ;;
+    esac
+
+}
+complete -F _credulous credulous
