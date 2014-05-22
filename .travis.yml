@@ -5,10 +5,14 @@ install:
   - go get -v -t ./...
   - mkdir -p $HOME/gopath/bin
   - go install
-  - ./generate-pkgs
 script:
+  - env
   - export PATH=$HOME/gopath/bin:$PATH
   - go test ./...
+  - echo COMMIT IS <%= ENV["TRAVIS_COMMIT"] %>
+  - exit 1
+after_script:
+  - ./generate-pkgs
 deploy:
   provider: releases
   api_key:
