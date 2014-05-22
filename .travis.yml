@@ -19,4 +19,3 @@ deploy:
     - credulous*.rpm
   on:
     repo: realestate-com-au/credulous
-    tags: true
