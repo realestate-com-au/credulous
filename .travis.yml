@@ -8,10 +8,9 @@ install:
 script:
   - export PATH=$HOME/gopath/bin:$PATH
   - go test ./...
-after_script:
   - ./generate-pkgs
 env:
   global:
     secure: "atByW9YBuj/QUIxp0UtIM3hrvHN2mxReTs08VCIbeQCulct8FVU+/MRKTDAsP9gGT1jbKj7EXn77EoWWZBChOUhLK3Nl87UZEN78wDejkG1/vvMDwAcLmRXgAbEoJ0Zqzf/4kspdh3w7jb97TS+5Zf/PSlc7tvl2SUASvnz/jYE="
 after_success:
-  - .travis/github-release.sh "$TRAVIS_REPO_SLUG" "`git describe`" true *.rpm *.deb
+  - .travis/github-release.sh "$TRAVIS_REPO_SLUG" "`git describe`-travis" true *.rpm *.deb
