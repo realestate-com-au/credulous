@@ -2,7 +2,7 @@
 %define debug_package %{nil}
 
 Name:		credulous
-Version:	0.1.3.5
+Version:	0.1.3.5b
 Release:	1%{?dist}
 Summary:	Secure AWS credential storage, rotation and redistribution
 
