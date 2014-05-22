@@ -6,7 +6,6 @@ install:
   - mkdir -p $HOME/gopath/bin
   - go install
 script:
-  - env
   - export PATH=$HOME/gopath/bin:$PATH
   - go test ./...
 after_script:
