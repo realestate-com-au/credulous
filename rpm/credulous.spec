@@ -28,9 +28,10 @@ go build
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/%{_bindir}
+mkdir -p $RPM_BUILD_ROOT/%{_bindir} $RPM_BUILD_ROOT/%{_sysconfdir}/bash_completion.d
 
 cp credulous $RPM_BUILD_ROOT/%{_bindir}
+cp credulous.bash_completion $RPM_BUILD_ROOT/%{_sysconfdir}/bash_completion.d/credulous.bash_completion
 chmod 0755 $RPM_BUILD_ROOT/%{_bindir}/credulous
 
 %clean
@@ -39,8 +40,11 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %attr(0755,root,root)		%{_bindir}/credulous
+%attr(0644,root,root)		%{_sysconfdir}/bash_completion.d/credulous.bash_completion
 
 %changelog
+* Thu May 22 2014 Colin Panisset <colin.panisset@rea-group.com> 0.1.4-1
+- add bash_completion
 * Sat May 17 2014 Colin Panisset <colin.panisset@rea-group.com> 0.1.3-1
 - add listing of stored credentials
 - return default credentials if there's only one set
