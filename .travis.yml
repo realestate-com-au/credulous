@@ -9,8 +9,6 @@ script:
   - env
   - export PATH=$HOME/gopath/bin:$PATH
   - go test ./...
-  - echo COMMIT IS <%= ENV["TRAVIS_COMMIT"] %>
-  - exit 1
 after_script:
   - ./generate-pkgs
 deploy:
