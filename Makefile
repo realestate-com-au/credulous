@@ -4,7 +4,7 @@ MOCK_CONFIG=epel-6-x86_64
 SHELL=/bin/bash
 DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ print $$3 }' | cut -f2 -d\' )
 
-SRCS=credulous.go aws_iam.go credentials.go crypto.go git.go utils.go
+SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 	testkey testkey.pub credential.json
 
