@@ -2,7 +2,6 @@ language: go
 go:
   - 1.2
 install:
-  - go get launchpad.net/goamz/aws
   - go get -v -t ./...
   - mkdir -p $HOME/gopath/bin
   - go install
