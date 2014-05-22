@@ -15,8 +15,8 @@ deploy:
   api_key:
     secure: PJ7v7kpUqoD79MraUNgnE/G/V1kkBAVF8D4FPJ6FPScfA/avionrK67UHMcUFiVbj7IaXRsngCFBCq/9NnaHOEuctkoqmytpA5tbMrEsT4oi4L4n8rzAyaX+B8QbgQ4/xiHxmq8kDz5f5YOmkH7AQSqVnM2YpK3B9gc5Je41gpg=
   file:
-    - credulous*.deb
-    - credulous*.rpm
+    - credulous_0.1.3.2_amd64.deb
+    - credulous-0.1.3.2-el6.1.x86_64.rpm
   on:
     repo: realestate-com-au/credulous
     tags: true
