@@ -18,6 +18,7 @@ MOCK_RESULT=/var/lib/mock/$(MOCK_CONFIG)/result
 NVR=$(NAME)-$(VERSION)-$(RELEASE)
 MOCK_SRPM=$(NVR).src.rpm
 RPM=$(NVR).x86_64.rpm
+TGZ=$(NAME)-$(VERSION).tar.gz
 
 .DEFAULT: all
 .PHONY: debianpkg
@@ -38,7 +39,7 @@ rpmbuild: sources
 
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:
-	tar czvf $(NAME)-$(VERSION).tar.gz --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
+	tar czvf $(TGZ) --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
 
 debianpkg:
 	@echo Build Debian packages
@@ -64,7 +65,7 @@ mock-srpm: sources
 	cp $(MOCK_RESULT)/$(MOCK_SRPM) .
 
 clean:
-	rm -f $(MOCK_SRPM) $(RPM)
+	rm -f $(MOCK_SRPM) $(RPM) $(TGZ)
 
 allclean:
 	mock -r $(MOCK_CONFIG) --clean
