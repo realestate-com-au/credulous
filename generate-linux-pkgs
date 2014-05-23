@@ -20,6 +20,8 @@ elif [ -f /etc/debian_version ]; then
     sudo mkdir /var/lib/mock
     sudo chgrp -R mock /var/lib/mock
     sudo chmod 2755 /var/lib/mock
+    # clean up so we don't release these .debs as well
+    rm *.deb
 else
     echo "I don't know what distro I'm on"
     exit 1
