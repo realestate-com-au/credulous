@@ -125,12 +125,14 @@ fi
 
 echo "Creating GitHub release for $RELEASE"
 
+NAME=$( git tag -l $TAG -n1 | cut -f2- -d" " )
+
 echo -n "Create draft release... "
 JSON=$(cat <<EOF
 {
   "tag_name":         "$TAG",
   "target_commitish": "master",
-  "name":             "$TAG: New release",
+  "name":             "$NAME",
   "draft":            true,
   "prerelease":       $PRERELEASE
 }
@@ -179,7 +181,7 @@ echo -n "Publishing release... "
 JSON=$(cat <<EOF
 {
   "tag_name": "$TAG",
-  "name": "$TAG: new release",
+  "name": "$NAME",
   "draft": false,
   "prerelease": $PRERELEASE
 }
