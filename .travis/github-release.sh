@@ -53,6 +53,11 @@
 #
 # The third argument indicates whether this is a prerelease or not
 #
+# The fourth argument indicates whether the tag already exists; this will
+# be the case if you tagged and then pushed to github, which triggered a
+# build in Travis. If you get failures publishing with code: "already_exists"
+# for field "tag_name" then you need to set this to true
+#
 # The remaining arguments are a list of asset files that you
 # want to publish along with the release.
 #
@@ -83,6 +88,7 @@ set -e
 REPO=$1 && shift
 RELEASE=$1 && shift
 PRERELEASE=$1 && shift
+EXISTS=$1 && shift
 RELEASEFILES=$@
 
 if ! TAG=`git describe --exact-match 2>/dev/null`; then
@@ -100,6 +106,26 @@ if [[ -z "$RELEASEFILES" ]]; then
   exit 1
 fi
 
+if [ -z "$PRERELEASE" ]; then
+    echo "Error: you need to indicate whether this is a prerelease"
+    exit 1
+fi
+
+if [ -z "$EXISTS" ]; then
+    echo "Error: you need to indicate whether or not the tag already exists"
+    exit 1
+fi
+
+case $PRERELEASE in
+    true|false) : ;;
+    *) echo "Error: PRERELEASE must be true or false"; exit 1 ;;
+esac
+
+case $EXISTS in
+    true|false) : ;;
+    *) echo "Error: EXISTS must be true or false"; exit 1 ;;
+esac
+
 SCRIPTDIR=`dirname $0`
 [ -e "$SCRIPTDIR/GITHUBTOKEN" ] && . "$SCRIPTDIR/GITHUBTOKEN"
 if [[ -z "$GITHUBTOKEN" ]]; then
@@ -110,10 +136,17 @@ fi
 echo "Creating GitHub release for $RELEASE"
 
 echo -n "Create draft release... "
+
+if $EXISTS; then
+    TARGET="\"target_commitish\":\"master\","
+else
+    TARGET=""
+fi
+
 JSON=$(cat <<EOF
 {
   "tag_name":         "$TAG",
-  "target_commitish": "master",
+  $TARGET
   "name":             "$TAG: New release",
   "draft":            true,
   "prerelease":       $PRERELEASE
