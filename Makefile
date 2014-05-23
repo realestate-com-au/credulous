@@ -10,7 +10,7 @@ TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 
 SPEC=rpm/credulous.spec
 NAME=$(shell grep '^Name:' $(SPEC) | awk '{ print $$2 }' )
-VERSION=$(shell grep '^Version:' $(SPEC) | awk '{ print $$2 }' )
+VERSION=$(shell git describe --abbrev=0 )
 RELEASE=$(shell grep '^Release:' $(SPEC) | awk '{ print $$2 }' | sed -e 's/%{?dist}/.$(DIST)/' )
 
 MOCK_RESULT=/var/lib/mock/$(MOCK_CONFIG)/result
@@ -61,6 +61,7 @@ mock-srpm: sources
 	@echo "DIST is $(DIST)"
 	@echo "RELEASE is $(RELEASE)"
 	# mock -r $(MOCK_CONFIG) --init
+	sed -i -e 's/==VERSION==/$(VERSION)/' $(SPEC)
 	mock -r $(MOCK_CONFIG) --buildsrpm --spec $(SPEC) --sources .
 	cp $(MOCK_RESULT)/$(MOCK_SRPM) .
 
