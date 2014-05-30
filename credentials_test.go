@@ -150,7 +150,7 @@ func TestReadFile(t *testing.T) {
 			So(cred.LifeTime, ShouldEqual, 22)
 		})
 		Convey("Credentials display correctly", func() {
-			cred := Credential{KeyId: "ABC", SecretKey: "SECRET"}
+			cred := OldCredential{KeyId: "ABC", SecretKey: "SECRET"}
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
 			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=ABC\nexport AWS_SECRET_ACCESS_KEY=SECRET\n")
@@ -160,7 +160,7 @@ func TestReadFile(t *testing.T) {
 			// temp_dir, err := ioutil.TempDir("", "SavingCredentialsTest")
 			// panic_the_err(err)
 			//
-			// cred := Credential{KeyId: "ABC", SecretKey: "SECRET"}
+			// cred := OldCredential{KeyId: "ABC", SecretKey: "SECRET"}
 			// new_filename := Save(cred, temp_dir)
 			//
 			// new_cred := readCredentialFile(new_filename)

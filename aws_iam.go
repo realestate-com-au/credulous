@@ -89,7 +89,7 @@ func verify_user(username string, instance Instancer) error {
 	return err
 }
 
-func verifyUserAndAccount(creds Credential) error {
+func verifyUserAndAccount(creds OldCredential) error {
 	// need to check both the username and the account alias for the
 	// supplied creds match the passed-in username and account alias
 	auth := aws.Auth{AccessKey: creds.KeyId, SecretKey: creds.SecretKey}

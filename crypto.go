@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/base64"
+	"fmt"
 	"math/big"
 	"reflect"
 	"strings"
@@ -70,4 +72,15 @@ func CredulousDecode(ciphertext string, salt string, privkey *rsa.PrivateKey) (p
 	}
 	plaintext = strings.Replace(string(out), salt, "", 1)
 	return plaintext, nil
+}
+
+func SSHFingerprint(pubkey ssh.PublicKey) (fingerprint string) {
+	binary := pubkey.Marshal()
+	hash := md5.Sum(binary)
+	// now add the colons
+	fingerprint = fmt.Sprintf("%02x", (hash[0]))
+	for i := 1; i < len(hash); i += 1 {
+		fingerprint += ":" + fmt.Sprintf("%02x", (hash[i]))
+	}
+	return fingerprint
 }

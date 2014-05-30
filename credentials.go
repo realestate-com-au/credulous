@@ -21,7 +21,27 @@ import (
 	"code.google.com/p/go.crypto/ssh"
 )
 
+type Credentials struct {
+	Version          string
+	IamUsername      string
+	AccountAliasOrId string
+	CreateTime       string
+	Lifetime         int
+	Encryptions      []Encryption
+}
+
+type Encryption struct {
+	Fingerprint string
+	Ciphertext  string
+}
+
 type Credential struct {
+	KeyId     string
+	SecretKey string
+	EnvVars   map[string]string
+}
+
+type OldCredential struct {
 	CreateTime       string
 	LifeTime         int
 	KeyId            string
@@ -56,13 +76,13 @@ func loadPrivateKey(filename string) (privateKey *rsa.PrivateKey, err error) {
 	return privateKey, nil
 }
 
-func readCredentialFile(fileName string, keyfile string) (*Credential, error) {
+func readCredentialFile(fileName string, keyfile string) (*OldCredential, error) {
 	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	var credential Credential
+	var credential OldCredential
 	err = json.Unmarshal(b, &credential)
 	if err != nil {
 		return nil, err
@@ -88,7 +108,7 @@ func readCredentialFile(fileName string, keyfile string) (*Credential, error) {
 	return &credential, nil
 }
 
-func (cred Credential) WriteToDisk(filename string) {
+func (cred OldCredential) WriteToDisk(filename string) {
 	b, err := json.Marshal(cred)
 	panic_the_err(err)
 	path := filepath.Join(getRootPath(), "local", cred.AccountAliasOrId, cred.IamUsername)
@@ -97,7 +117,7 @@ func (cred Credential) WriteToDisk(filename string) {
 	panic_the_err(err)
 }
 
-func (cred Credential) Display(output io.Writer) {
+func (cred OldCredential) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n", cred.KeyId, cred.SecretKey)
 }
 
@@ -117,7 +137,7 @@ func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) {
 	panic_the_err(err)
 	secret_encoded, generated_salt, err := CredulousEncode(secret, &static_salt, pubkey)
 	panic_the_err(err)
-	creds := Credential{
+	creds := OldCredential{
 		KeyId:            id_encoded,
 		SecretKey:        secret_encoded,
 		AccountAliasOrId: alias,
@@ -173,7 +193,7 @@ func findDefaultDir(fl FileLister) (string, error) {
 	return dirs[0].Name(), nil
 }
 
-func ValidateCredentials(alias string, username string, cred Credential) error {
+func ValidateCredentials(alias string, username string, cred OldCredential) error {
 	if cred.IamUsername != username {
 		err := errors.New("FATAL: username in credential does not match requested username")
 		return err
@@ -190,7 +210,7 @@ func ValidateCredentials(alias string, username string, cred Credential) error {
 	return nil
 }
 
-func RetrieveCredentials(alias string, username string, keyfile string) (Credential, error) {
+func RetrieveCredentials(alias string, username string, keyfile string) (OldCredential, error) {
 	rootPath := filepath.Join(getRootPath(), "local")
 	rootDir, err := os.Open(rootPath)
 	if err != nil {
@@ -218,7 +238,7 @@ func RetrieveCredentials(alias string, username string, keyfile string) (Credent
 	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
 	cred, err := readCredentialFile(filePath, keyfile)
 	if err != nil {
-		return Credential{}, err
+		return OldCredential{}, err
 	}
 
 	return *cred, nil
