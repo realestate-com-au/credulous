@@ -119,7 +119,7 @@ func parseCredential(data []byte, keyfile string) (*Credentials, error) {
 		return nil, err
 	}
 
-	fp, err := SSHPrivateFingerprint(privKey)
+	fp, err := SSHPrivateFingerprint(*privKey)
 	if err != nil {
 		return nil, err
 	}
