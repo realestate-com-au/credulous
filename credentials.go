@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,9 +13,6 @@ import (
 
 	"github.com/realestate-com-au/goamz/aws"
 	"github.com/realestate-com-au/goamz/iam"
-
-	"crypto/rsa"
-	"crypto/x509"
 
 	"code.google.com/p/go.crypto/ssh"
 )
@@ -59,31 +54,7 @@ type OldCredential struct {
 	FingerPrint      string
 }
 
-func loadPrivateKey(filename string) (privateKey *rsa.PrivateKey, err error) {
-	var tmp []byte
-
-	if tmp, err = ioutil.ReadFile(filename); err != nil {
-		return &rsa.PrivateKey{}, err
-	}
-
-	pemblock, _ := pem.Decode([]byte(tmp))
-	if x509.IsEncryptedPEMBlock(pemblock) {
-		if tmp, err = decryptPEM(pemblock, filename); err != nil {
-			return &rsa.PrivateKey{}, err
-		}
-	} else {
-		log.Print("WARNING: Your private SSH key has no passphrase!")
-	}
-
-	key, err := ssh.ParseRawPrivateKey(tmp)
-	if err != nil {
-		return &rsa.PrivateKey{}, err
-	}
-	privateKey = key.(*rsa.PrivateKey)
-	return privateKey, nil
-}
-
-func parseOldCredential(data []byte, keyfile string) (*OldCredential, error) {
+func decodeOldCredential(data []byte, keyfile string) (*OldCredential, error) {
 	var credential OldCredential
 	err := json.Unmarshal(data, &credential)
 	if err != nil {
@@ -110,39 +81,47 @@ func parseOldCredential(data []byte, keyfile string) (*OldCredential, error) {
 	return &credential, nil
 }
 
-func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
-	var creds Credentials
+func parseOldCredential(data []byte, keyfile string) (*Credentials, error) {
+	oldCred, err := decodeOldCredential(data, keyfile)
+	if err != nil {
+		return nil, err
+	}
+	// build a new Credentials structure out of the old
+	cred := Credential{
+		KeyId:     oldCred.KeyId,
+		SecretKey: oldCred.SecretKey,
+	}
+	enc := []Encryption{}
+	enc = append(enc, Encryption{
+		decoded: cred,
+	})
+	creds := Credentials{
+		Version:          "noversion",
+		IamUsername:      oldCred.IamUsername,
+		AccountAliasOrId: oldCred.AccountAliasOrId,
+		CreateTime:       oldCred.CreateTime,
+		LifeTime:         oldCred.LifeTime,
+		Encryptions:      enc,
+	}
 
+	return &creds, nil
+}
+
+func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
 
 	if !strings.Contains(string(b), "Version:") {
-		oldCred, err := parseOldCredential(b, keyfile)
+		creds, err := parseOldCredential(b, keyfile)
 		if err != nil {
 			return nil, err
 		}
-		// build a new Credentials structure out of the old
-		cred := Credential{
-			KeyId:     oldCred.KeyId,
-			SecretKey: oldCred.SecretKey,
-		}
-		enc := []Encryption{}
-		enc = append(enc, Encryption{
-			decoded: cred,
-		})
-		creds = Credentials{
-			Version:          "noversion",
-			IamUsername:      oldCred.IamUsername,
-			AccountAliasOrId: oldCred.AccountAliasOrId,
-			CreateTime:       oldCred.CreateTime,
-			LifeTime:         oldCred.LifeTime,
-			Encryptions:      enc,
-		}
+		return creds, nil
 	}
 
-	return &creds, nil
+	return &Credentials{}, nil
 }
 
 func (cred Credentials) WriteToDisk(filename string) (err error) {
