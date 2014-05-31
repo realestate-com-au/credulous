@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/realestate-com-au/goamz/aws"
@@ -26,13 +27,17 @@ type Credentials struct {
 	IamUsername      string
 	AccountAliasOrId string
 	CreateTime       string
-	Lifetime         int
+	LifeTime         int
 	Encryptions      []Encryption
 }
 
 type Encryption struct {
 	Fingerprint string
 	Ciphertext  string
+	// we can do this because the field isn't exported
+	// and so won't be included when we call Marshal to
+	// save the encrypted credentials
+	decoded Credential
 }
 
 type Credential struct {
@@ -76,14 +81,9 @@ func loadPrivateKey(filename string) (privateKey *rsa.PrivateKey, err error) {
 	return privateKey, nil
 }
 
-func readCredentialFile(fileName string, keyfile string) (*OldCredential, error) {
-	b, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
+func parseOldCredential(data []byte, keyfile string) (*OldCredential, error) {
 	var credential OldCredential
-	err = json.Unmarshal(b, &credential)
+	err := json.Unmarshal(data, &credential)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +108,41 @@ func readCredentialFile(fileName string, keyfile string) (*OldCredential, error)
 	return &credential, nil
 }
 
+func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
+	var creds Credentials
+
+	b, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.Contains(string(b), "Version:") {
+		oldCred, err := parseOldCredential(b, keyfile)
+		if err != nil {
+			return nil, err
+		}
+		// build a new Credentials structure out of the old
+		cred := Credential{
+			KeyId:     oldCred.KeyId,
+			SecretKey: oldCred.SecretKey,
+		}
+		enc := []Encryption{}
+		enc = append(enc, Encryption{
+			decoded: cred,
+		})
+		creds = Credentials{
+			Version:          "noversion",
+			IamUsername:      oldCred.IamUsername,
+			AccountAliasOrId: oldCred.AccountAliasOrId,
+			CreateTime:       oldCred.CreateTime,
+			LifeTime:         oldCred.LifeTime,
+			Encryptions:      enc,
+		}
+	}
+
+	return &creds, nil
+}
+
 func (cred OldCredential) WriteToDisk(filename string) {
 	b, err := json.Marshal(cred)
 	panic_the_err(err)
@@ -119,6 +154,11 @@ func (cred OldCredential) WriteToDisk(filename string) {
 
 func (cred OldCredential) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n", cred.KeyId, cred.SecretKey)
+}
+
+func (cred Credentials) Display(output io.Writer) {
+	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n",
+		cred.Encryptions[0].decoded.KeyId, cred.Encryptions[0].decoded.SecretKey)
 }
 
 func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) {
@@ -193,7 +233,7 @@ func findDefaultDir(fl FileLister) (string, error) {
 	return dirs[0].Name(), nil
 }
 
-func ValidateCredentials(alias string, username string, cred OldCredential) error {
+func (cred Credentials) ValidateCredentials(alias string, username string) error {
 	if cred.IamUsername != username {
 		err := errors.New("FATAL: username in credential does not match requested username")
 		return err
@@ -203,14 +243,14 @@ func ValidateCredentials(alias string, username string, cred OldCredential) erro
 		return err
 	}
 
-	err := verifyUserAndAccount(cred)
+	err := cred.verifyUserAndAccount()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func RetrieveCredentials(alias string, username string, keyfile string) (OldCredential, error) {
+func RetrieveCredentials(alias string, username string, keyfile string) (Credentials, error) {
 	rootPath := filepath.Join(getRootPath(), "local")
 	rootDir, err := os.Open(rootPath)
 	if err != nil {
@@ -238,7 +278,7 @@ func RetrieveCredentials(alias string, username string, keyfile string) (OldCred
 	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
 	cred, err := readCredentialFile(filePath, keyfile)
 	if err != nil {
-		return OldCredential{}, err
+		return Credentials{}, err
 	}
 
 	return *cred, nil

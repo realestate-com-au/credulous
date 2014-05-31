@@ -160,7 +160,7 @@ func main() {
 				}
 
 				if !c.Bool("force") {
-					err = ValidateCredentials(account, username, cred)
+					err = cred.ValidateCredentials(account, username)
 					if err != nil {
 						panic_the_err(err)
 					}
