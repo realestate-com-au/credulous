@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -10,18 +9,42 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/realestate-com-au/goamz/aws"
 	"github.com/realestate-com-au/goamz/iam"
 
-	"crypto/rsa"
-	"crypto/x509"
-
 	"code.google.com/p/go.crypto/ssh"
 )
 
+const FORMAT_VERSION string = "2014-05-31"
+
+type Credentials struct {
+	Version          string
+	IamUsername      string
+	AccountAliasOrId string
+	CreateTime       string
+	LifeTime         int
+	Encryptions      []Encryption
+}
+
+type Encryption struct {
+	Fingerprint string
+	Ciphertext  string
+	// we can do this because the field isn't exported
+	// and so won't be included when we call Marshal to
+	// save the encrypted credentials
+	decoded Credential
+}
+
 type Credential struct {
+	KeyId     string
+	SecretKey string
+	EnvVars   map[string]string
+}
+
+type OldCredential struct {
 	CreateTime       string
 	LifeTime         int
 	KeyId            string
@@ -32,38 +55,9 @@ type Credential struct {
 	FingerPrint      string
 }
 
-func loadPrivateKey(filename string) (privateKey *rsa.PrivateKey, err error) {
-	var tmp []byte
-
-	if tmp, err = ioutil.ReadFile(filename); err != nil {
-		return &rsa.PrivateKey{}, err
-	}
-
-	pemblock, _ := pem.Decode([]byte(tmp))
-	if x509.IsEncryptedPEMBlock(pemblock) {
-		if tmp, err = decryptPEM(pemblock, filename); err != nil {
-			return &rsa.PrivateKey{}, err
-		}
-	} else {
-		log.Print("WARNING: Your private SSH key has no passphrase!")
-	}
-
-	key, err := ssh.ParseRawPrivateKey(tmp)
-	if err != nil {
-		return &rsa.PrivateKey{}, err
-	}
-	privateKey = key.(*rsa.PrivateKey)
-	return privateKey, nil
-}
-
-func readCredentialFile(fileName string, keyfile string) (*Credential, error) {
-	b, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	var credential Credential
-	err = json.Unmarshal(b, &credential)
+func decodeOldCredential(data []byte, keyfile string) (*OldCredential, error) {
+	var credential OldCredential
+	err := json.Unmarshal(data, &credential)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +67,13 @@ func readCredentialFile(fileName string, keyfile string) (*Credential, error) {
 		return nil, err
 	}
 
-	decoded, err := CredulousDecode(credential.KeyId, credential.Salt, privKey)
+	decoded, err := CredulousDecodeWithSalt(credential.KeyId, credential.Salt, privKey)
 	if err != nil {
 		return nil, err
 	}
 	credential.KeyId = decoded
 
-	decoded, err = CredulousDecode(credential.SecretKey, credential.Salt, privKey)
+	decoded, err = CredulousDecodeWithSalt(credential.SecretKey, credential.Salt, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -88,46 +82,179 @@ func readCredentialFile(fileName string, keyfile string) (*Credential, error) {
 	return &credential, nil
 }
 
-func (cred Credential) WriteToDisk(filename string) {
+func parseOldCredential(data []byte, keyfile string) (*Credentials, error) {
+	oldCred, err := decodeOldCredential(data, keyfile)
+	if err != nil {
+		return nil, err
+	}
+	// build a new Credentials structure out of the old
+	cred := Credential{
+		KeyId:     oldCred.KeyId,
+		SecretKey: oldCred.SecretKey,
+	}
+	enc := []Encryption{}
+	enc = append(enc, Encryption{
+		decoded: cred,
+	})
+	creds := Credentials{
+		Version:          "noversion",
+		IamUsername:      oldCred.IamUsername,
+		AccountAliasOrId: oldCred.AccountAliasOrId,
+		CreateTime:       oldCred.CreateTime,
+		LifeTime:         oldCred.LifeTime,
+		Encryptions:      enc,
+	}
+
+	return &creds, nil
+}
+
+func parseCredential(data []byte, keyfile string) (*Credentials, error) {
+	var creds Credentials
+	err := json.Unmarshal(data, &creds)
+	if err != nil {
+		return nil, err
+	}
+
+	privKey, err := loadPrivateKey(keyfile)
+	if err != nil {
+		return nil, err
+	}
+
+	fp, err := SSHPrivateFingerprint(*privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var offset int = -1
+	for i, enc := range creds.Encryptions {
+		if enc.Fingerprint == fp {
+			offset = i
+			break
+		}
+	}
+
+	if offset < 0 {
+		err := errors.New("Cannot find an SSH key to decrypt on this system")
+		return nil, err
+	}
+
+	tmp, err := CredulousDecode(creds.Encryptions[offset].Ciphertext, privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var cred Credential
+	err = json.Unmarshal([]byte(tmp), &cred)
+	if err != nil {
+		return nil, err
+	}
+
+	creds.Encryptions[0].decoded = cred
+	return &creds, nil
+}
+
+func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
+	b, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.Contains(string(b), "Version") {
+		log.Print("INFO: These credentials are in the old format; re-run 'credulous save' now to remove this warning")
+		creds, err := parseOldCredential(b, keyfile)
+		if err != nil {
+			return nil, err
+		}
+		return creds, nil
+	}
+
+	creds, err := parseCredential(b, keyfile)
+	if err != nil {
+		return nil, err
+	}
+
+	return creds, nil
+}
+
+func (cred Credentials) WriteToDisk(filename string) (err error) {
 	b, err := json.Marshal(cred)
-	panic_the_err(err)
+	if err != nil {
+		return err
+	}
 	path := filepath.Join(getRootPath(), "local", cred.AccountAliasOrId, cred.IamUsername)
 	os.MkdirAll(path, 0700)
 	err = ioutil.WriteFile(filepath.Join(path, filename), b, 0600)
-	panic_the_err(err)
+	return err
 }
 
-func (cred Credential) Display(output io.Writer) {
+func (cred OldCredential) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n", cred.KeyId, cred.SecretKey)
 }
 
-func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) {
-	auth := aws.Auth{AccessKey: id, SecretKey: secret}
-	instance := iam.New(auth, aws.APSoutheast2)
-	if username == "" {
-		username, _ = getAWSUsername(instance)
+func (cred Credentials) Display(output io.Writer) {
+	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n",
+		cred.Encryptions[0].decoded.KeyId, cred.Encryptions[0].decoded.SecretKey)
+}
+
+func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
+
+	var key_create_date int64
+
+	if force {
+		key_create_date = time.Now().Unix()
+	} else {
+		auth := aws.Auth{AccessKey: id, SecretKey: secret}
+		instance := iam.New(auth, aws.APSoutheast2)
+		if username == "" {
+			username, err = getAWSUsername(instance)
+			if err != nil {
+				return err
+			}
+		}
+		if alias == "" {
+			alias, err = getAWSAccountAlias(instance)
+			if err != nil {
+				return err
+			}
+		}
+
+		date, _ := getKeyCreateDate(instance)
+		t, err := time.Parse("2006-01-02T15:04:05Z", date)
+		key_create_date = t.Unix()
+		if err != nil {
+			return err
+		}
 	}
-	if alias == "" {
-		alias, _ = getAWSAccountAlias(instance)
-	}
+
 	fmt.Printf("saving credentials for %s@%s\n", username, alias)
-	random_salt := RandomSaltGenerator{}
-	id_encoded, generated_salt, err := CredulousEncode(id, &random_salt, pubkey)
-	static_salt := StaticSaltGenerator{salt: generated_salt}
-	panic_the_err(err)
-	secret_encoded, generated_salt, err := CredulousEncode(secret, &static_salt, pubkey)
-	panic_the_err(err)
-	creds := Credential{
-		KeyId:            id_encoded,
-		SecretKey:        secret_encoded,
+	secrets := Credential{
+		KeyId:     id,
+		SecretKey: secret,
+	}
+	plaintext, err := json.Marshal(secrets)
+	if err != nil {
+		return err
+	}
+	encoded, err := CredulousEncode(string(plaintext), pubkey)
+	if err != nil {
+		return err
+	}
+
+	enc_slice := []Encryption{}
+	enc_slice = append(enc_slice, Encryption{
+		Ciphertext:  encoded,
+		Fingerprint: SSHFingerprint(pubkey),
+	})
+	creds := Credentials{
+		Version:          FORMAT_VERSION,
 		AccountAliasOrId: alias,
 		IamUsername:      username,
-		Salt:             generated_salt,
+		CreateTime:       fmt.Sprintf("%d", key_create_date),
+		Encryptions:      enc_slice,
 	}
-	key_create_date, _ := getKeyCreateDate(instance)
-	t, err := time.Parse("2006-01-02T15:04:05Z", key_create_date)
-	panic_the_err(err)
-	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", t.Unix(), id[12:]))
+
+	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, id[12:]))
+	return nil
 }
 
 func getRootPath() string {
@@ -173,7 +300,7 @@ func findDefaultDir(fl FileLister) (string, error) {
 	return dirs[0].Name(), nil
 }
 
-func ValidateCredentials(alias string, username string, cred Credential) error {
+func (cred Credentials) ValidateCredentials(alias string, username string) error {
 	if cred.IamUsername != username {
 		err := errors.New("FATAL: username in credential does not match requested username")
 		return err
@@ -183,14 +310,14 @@ func ValidateCredentials(alias string, username string, cred Credential) error {
 		return err
 	}
 
-	err := verifyUserAndAccount(cred)
+	err := cred.verifyUserAndAccount()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func RetrieveCredentials(alias string, username string, keyfile string) (Credential, error) {
+func RetrieveCredentials(alias string, username string, keyfile string) (Credentials, error) {
 	rootPath := filepath.Join(getRootPath(), "local")
 	rootDir, err := os.Open(rootPath)
 	if err != nil {
@@ -218,7 +345,7 @@ func RetrieveCredentials(alias string, username string, keyfile string) (Credent
 	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
 	cred, err := readCredentialFile(filePath, keyfile)
 	if err != nil {
-		return Credential{}, err
+		return Credentials{}, err
 	}
 
 	return *cred, nil

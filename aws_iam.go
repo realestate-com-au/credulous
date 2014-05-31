@@ -89,10 +89,13 @@ func verify_user(username string, instance Instancer) error {
 	return err
 }
 
-func verifyUserAndAccount(creds Credential) error {
+func (creds Credentials) verifyUserAndAccount() error {
 	// need to check both the username and the account alias for the
 	// supplied creds match the passed-in username and account alias
-	auth := aws.Auth{AccessKey: creds.KeyId, SecretKey: creds.SecretKey}
+	auth := aws.Auth{
+		AccessKey: creds.Encryptions[0].decoded.KeyId,
+		SecretKey: creds.Encryptions[0].decoded.SecretKey,
+	}
 	// Note: the region is irrelevant for IAM
 	instance := iam.New(auth, aws.APSoutheast2)
 

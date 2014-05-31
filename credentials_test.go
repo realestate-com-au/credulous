@@ -145,27 +145,33 @@ func TestValidateCredentials(t *testing.T) {
 
 func TestReadFile(t *testing.T) {
 	Convey("Test Read File", t, func() {
-		Convey("Valid Json returns Credential", func() {
+		Convey("Valid old Json returns Credential", func() {
 			cred, _ := readCredentialFile("credential.json", "testkey")
 			So(cred.LifeTime, ShouldEqual, 22)
+			So(cred.Encryptions[0].decoded.KeyId, ShouldEqual, "some plaintext")
 		})
-		Convey("Credentials display correctly", func() {
-			cred := Credential{KeyId: "ABC", SecretKey: "SECRET"}
+		Convey("Old credentials display correctly", func() {
+			cred, _ := readCredentialFile("credential.json", "testkey")
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
-			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=ABC\nexport AWS_SECRET_ACCESS_KEY=SECRET\n")
+			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=some plaintext\nexport AWS_SECRET_ACCESS_KEY=some plaintext\n")
 		})
 
-		Convey("Saving credentials", func() {
-			// temp_dir, err := ioutil.TempDir("", "SavingCredentialsTest")
-			// panic_the_err(err)
-			//
-			// cred := Credential{KeyId: "ABC", SecretKey: "SECRET"}
-			// new_filename := Save(cred, temp_dir)
-			//
-			// new_cred := readCredentialFile(new_filename)
-			// fmt.Println(new_cred)
-
+		Convey("Valid new Json returns Credentials", func() {
+			cred, err := readCredentialFile("newcreds.json", "testkey")
+			So(err, ShouldEqual, nil)
+			So(cred.LifeTime, ShouldEqual, 0)
+			So(cred.CreateTime, ShouldEqual, "1401515273")
+			So(cred.Encryptions[0].Fingerprint, ShouldEqual, "c0:61:84:fc:e8:c9:52:dc:cd:a9:8e:82:a2:70:0a:30")
+			So(cred.Encryptions[0].decoded.KeyId, ShouldEqual, "plaintextkeyid")
+			So(cred.Encryptions[0].decoded.SecretKey, ShouldEqual, "plaintextsecret")
+		})
+		Convey("New credentials display correctly", func() {
+			cred, err := readCredentialFile("newcreds.json", "testkey")
+			testWriter := TestWriter{}
+			cred.Display(&testWriter)
+			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=plaintextkeyid\nexport AWS_SECRET_ACCESS_KEY=plaintextsecret\n")
+			So(err, ShouldEqual, nil)
 		})
 	})
 }
