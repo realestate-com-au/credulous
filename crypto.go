@@ -43,25 +43,21 @@ func (sg *RandomSaltGenerator) GenerateSalt() (string, error) {
 }
 
 // returns a base64 encoded ciphertext. The salt is generated internally
-func CredulousEncode(plaintext string, salter Salter, pubkey ssh.PublicKey) (cipher string, salt string, err error) {
-	salt, err = salter.GenerateSalt()
-	if err != nil {
-		return "", "", err
-	}
+func CredulousEncode(plaintext string, pubkey ssh.PublicKey) (cipher string, err error) {
 	s := reflect.ValueOf(pubkey).Elem()
 	rsaKey := rsa.PublicKey{
 		N: s.Field(0).Interface().(*big.Int),
 		E: s.Field(1).Interface().(int),
 	}
-	out, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &rsaKey, []byte(salt+plaintext), []byte("Credulous"))
+	out, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &rsaKey, []byte(plaintext), []byte("Credulous"))
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	cipher = base64.StdEncoding.EncodeToString(out)
-	return cipher, salt, nil
+	return cipher, nil
 }
 
-func CredulousDecode(ciphertext string, salt string, privkey *rsa.PrivateKey) (plaintext string, err error) {
+func CredulousDecodeWithSalt(ciphertext string, salt string, privkey *rsa.PrivateKey) (plaintext string, err error) {
 	in, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return "", err

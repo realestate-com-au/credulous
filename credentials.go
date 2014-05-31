@@ -22,6 +22,8 @@ import (
 	"code.google.com/p/go.crypto/ssh"
 )
 
+const FORMAT_VERSION string = "2014-05-31"
+
 type Credentials struct {
 	Version          string
 	IamUsername      string
@@ -93,13 +95,13 @@ func parseOldCredential(data []byte, keyfile string) (*OldCredential, error) {
 		return nil, err
 	}
 
-	decoded, err := CredulousDecode(credential.KeyId, credential.Salt, privKey)
+	decoded, err := CredulousDecodeWithSalt(credential.KeyId, credential.Salt, privKey)
 	if err != nil {
 		return nil, err
 	}
 	credential.KeyId = decoded
 
-	decoded, err = CredulousDecode(credential.SecretKey, credential.Salt, privKey)
+	decoded, err = CredulousDecodeWithSalt(credential.SecretKey, credential.Salt, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -143,13 +145,15 @@ func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 	return &creds, nil
 }
 
-func (cred OldCredential) WriteToDisk(filename string) {
+func (cred Credentials) WriteToDisk(filename string) (err error) {
 	b, err := json.Marshal(cred)
-	panic_the_err(err)
+	if err != nil {
+		return err
+	}
 	path := filepath.Join(getRootPath(), "local", cred.AccountAliasOrId, cred.IamUsername)
 	os.MkdirAll(path, 0700)
 	err = ioutil.WriteFile(filepath.Join(path, filename), b, 0600)
-	panic_the_err(err)
+	return err
 }
 
 func (cred OldCredential) Display(output io.Writer) {
@@ -161,33 +165,54 @@ func (cred Credentials) Display(output io.Writer) {
 		cred.Encryptions[0].decoded.KeyId, cred.Encryptions[0].decoded.SecretKey)
 }
 
-func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) {
+func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) (err error) {
 	auth := aws.Auth{AccessKey: id, SecretKey: secret}
 	instance := iam.New(auth, aws.APSoutheast2)
 	if username == "" {
-		username, _ = getAWSUsername(instance)
+		username, err = getAWSUsername(instance)
+		if err != nil {
+			return err
+		}
 	}
 	if alias == "" {
-		alias, _ = getAWSAccountAlias(instance)
+		alias, err = getAWSAccountAlias(instance)
+		if err != nil {
+			return err
+		}
 	}
 	fmt.Printf("saving credentials for %s@%s\n", username, alias)
-	random_salt := RandomSaltGenerator{}
-	id_encoded, generated_salt, err := CredulousEncode(id, &random_salt, pubkey)
-	static_salt := StaticSaltGenerator{salt: generated_salt}
-	panic_the_err(err)
-	secret_encoded, generated_salt, err := CredulousEncode(secret, &static_salt, pubkey)
-	panic_the_err(err)
-	creds := OldCredential{
-		KeyId:            id_encoded,
-		SecretKey:        secret_encoded,
-		AccountAliasOrId: alias,
-		IamUsername:      username,
-		Salt:             generated_salt,
+	secrets := Credential{
+		KeyId:     id,
+		SecretKey: secret,
+	}
+	plaintext, err := json.Marshal(secrets)
+	if err != nil {
+		return err
+	}
+	encoded, err := CredulousEncode(string(plaintext), pubkey)
+	if err != nil {
+		return err
 	}
 	key_create_date, _ := getKeyCreateDate(instance)
 	t, err := time.Parse("2006-01-02T15:04:05Z", key_create_date)
-	panic_the_err(err)
+	if err != nil {
+		return err
+	}
+	enc_slice := []Encryption{}
+	enc_slice = append(enc_slice, Encryption{
+		Ciphertext:  encoded,
+		Fingerprint: SSHFingerprint(pubkey),
+	})
+	creds := Credentials{
+		Version:          FORMAT_VERSION,
+		AccountAliasOrId: alias,
+		IamUsername:      username,
+		CreateTime:       key_create_date,
+		Encryptions:      enc_slice,
+	}
+
 	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", t.Unix(), id[12:]))
+	return nil
 }
 
 func getRootPath() string {

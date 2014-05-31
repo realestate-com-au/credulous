@@ -135,7 +135,8 @@ func main() {
 				pubkeyString, err := ioutil.ReadFile(pubkeyFile)
 				panic_the_err(err)
 				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkeyString))
-				SaveCredentials(AWSAccessKeyId, AWSSecretAccessKey, username, account, pubkey)
+				err = SaveCredentials(AWSAccessKeyId, AWSSecretAccessKey, username, account, pubkey)
+				panic_the_err(err)
 			},
 		},
 		{
