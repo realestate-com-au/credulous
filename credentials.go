@@ -119,7 +119,25 @@ func parseCredential(data []byte, keyfile string) (*Credentials, error) {
 		return nil, err
 	}
 
-	tmp, err := CredulousDecode(creds.Encryptions[0].Ciphertext, privKey)
+	fp, err := SSHPrivateFingerprint(privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var offset int = -1
+	for i, enc := range creds.Encryptions {
+		if enc.Fingerprint == fp {
+			offset = i
+			break
+		}
+	}
+
+	if offset < 0 {
+		err := errors.New("Cannot find an SSH key to decrypt on this system")
+		return nil, err
+	}
+
+	tmp, err := CredulousDecode(creds.Encryptions[offset].Ciphertext, privKey)
 	if err != nil {
 		return nil, err
 	}
