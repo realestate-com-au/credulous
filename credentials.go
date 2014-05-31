@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,6 +160,7 @@ func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 	}
 
 	if !strings.Contains(string(b), "Version") {
+		log.Print("INFO: These credentials are in the old format; re-run 'credulous save' now to remove this warning")
 		creds, err := parseOldCredential(b, keyfile)
 		if err != nil {
 			return nil, err
