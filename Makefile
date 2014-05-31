@@ -6,13 +6,16 @@ DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ pr
 
 SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
-	testkey testkey.pub credential.json
+	testkey testkey.pub credential.json newcreds.json
 
 SPEC=rpm/credulous.spec
-NAME=$(shell grep '^Name:' $(SPEC) | awk '{ print $$2 }' )
-VERSION=$(shell git describe --abbrev=0 )
-VERSION ?= $(shell git describe --tags --abbrev=0 )
-RELEASE=$(shell grep '^Release:' $(SPEC) | awk '{ print $$2 }' | sed -e 's/%{?dist}/.$(DIST)/' )
+SPEC_TMPL=rpm/credulous.spec.tmpl
+NAME=$(shell grep '^Name:' $(SPEC_TMPL) | awk '{ print $$2 }' )
+VERSION=$(shell git describe --abbrev=0 2>/dev/null )
+ifeq ($(strip $(VERSION)), )
+	VERSION=$(shell git describe --tags --abbrev=0 )
+endif
+RELEASE=$(shell grep '^Release:' $(SPEC_TMPL) | awk '{ print $$2 }' | sed -e 's/%{?dist}/.$(DIST)/' )
 
 MOCK_RESULT=/var/lib/mock/$(MOCK_CONFIG)/result
 
@@ -40,6 +43,7 @@ rpmbuild: sources
 
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:
+	@echo "Building for version '$(VERSION)'"
 	tar czvf $(TGZ) --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
 
 debianpkg:
@@ -62,8 +66,9 @@ mock-srpm: sources
 	@echo "DIST is $(DIST)"
 	@echo "RELEASE is $(RELEASE)"
 	# mock -r $(MOCK_CONFIG) --init
-	sed -i -e 's/==VERSION==/$(VERSION)/' $(SPEC)
+	sed -e 's/==VERSION==/$(VERSION)/' $(SPEC_TMPL) > $(SPEC)
 	mock -r $(MOCK_CONFIG) --buildsrpm --spec $(SPEC) --sources .
+	rm -f $(SPEC)
 	cp $(MOCK_RESULT)/$(MOCK_SRPM) .
 
 clean:
