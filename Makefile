@@ -11,6 +11,7 @@ TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 SPEC=rpm/credulous.spec
 NAME=$(shell grep '^Name:' $(SPEC) | awk '{ print $$2 }' )
 VERSION=$(shell git describe --abbrev=0 )
+VERSION ?= $(shell git describe --tags --abbrev=0 )
 RELEASE=$(shell grep '^Release:' $(SPEC) | awk '{ print $$2 }' | sed -e 's/%{?dist}/.$(DIST)/' )
 
 MOCK_RESULT=/var/lib/mock/$(MOCK_CONFIG)/result
