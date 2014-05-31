@@ -150,7 +150,7 @@ func TestReadFile(t *testing.T) {
 			So(cred.LifeTime, ShouldEqual, 22)
 			So(cred.Encryptions[0].decoded.KeyId, ShouldEqual, "some plaintext")
 		})
-		Convey("Credentials display correctly", func() {
+		Convey("Old credentials display correctly", func() {
 			cred, _ := readCredentialFile("credential.json", "testkey")
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
@@ -166,17 +166,12 @@ func TestReadFile(t *testing.T) {
 			So(cred.Encryptions[0].decoded.KeyId, ShouldEqual, "plaintextkeyid")
 			So(cred.Encryptions[0].decoded.SecretKey, ShouldEqual, "plaintextsecret")
 		})
-
-		Convey("Saving credentials", func() {
-			// temp_dir, err := ioutil.TempDir("", "SavingCredentialsTest")
-			// panic_the_err(err)
-			//
-			// cred := OldCredential{KeyId: "ABC", SecretKey: "SECRET"}
-			// new_filename := Save(cred, temp_dir)
-			//
-			// new_cred := readCredentialFile(new_filename)
-			// fmt.Println(new_cred)
-
+		Convey("New credentials display correctly", func() {
+			cred, err := readCredentialFile("newcreds.json", "testkey")
+			testWriter := TestWriter{}
+			cred.Display(&testWriter)
+			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=plaintextkeyid\nexport AWS_SECRET_ACCESS_KEY=plaintextsecret\n")
+			So(err, ShouldEqual, nil)
 		})
 	})
 }
