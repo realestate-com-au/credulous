@@ -74,6 +74,19 @@ func CredulousEncode(plaintext string, pubkey ssh.PublicKey) (cipher string, err
 	return cipher, nil
 }
 
+func CredulousDecode(ciphertext string, privkey *rsa.PrivateKey) (plaintext string, err error) {
+	in, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return "", err
+	}
+	out, err := rsa.DecryptOAEP(sha1.New(), rand.Reader, privkey, in, []byte("Credulous"))
+	if err != nil {
+		return "", err
+	}
+	plaintext = string(out)
+	return plaintext, nil
+}
+
 func CredulousDecodeWithSalt(ciphertext string, salt string, privkey *rsa.PrivateKey) (plaintext string, err error) {
 	in, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {

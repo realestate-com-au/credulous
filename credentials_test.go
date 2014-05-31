@@ -157,6 +157,16 @@ func TestReadFile(t *testing.T) {
 			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=some plaintext\nexport AWS_SECRET_ACCESS_KEY=some plaintext\n")
 		})
 
+		Convey("Valid new Json returns Credentials", func() {
+			cred, err := readCredentialFile("newcreds.json", "testkey")
+			So(err, ShouldEqual, nil)
+			So(cred.LifeTime, ShouldEqual, 0)
+			So(cred.CreateTime, ShouldEqual, "1401515273")
+			So(cred.Encryptions[0].Fingerprint, ShouldEqual, "c0:61:84:fc:e8:c9:52:dc:cd:a9:8e:82:a2:70:0a:30")
+			So(cred.Encryptions[0].decoded.KeyId, ShouldEqual, "plaintextkeyid")
+			So(cred.Encryptions[0].decoded.SecretKey, ShouldEqual, "plaintextsecret")
+		})
+
 		Convey("Saving credentials", func() {
 			// temp_dir, err := ioutil.TempDir("", "SavingCredentialsTest")
 			// panic_the_err(err)

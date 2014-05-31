@@ -107,13 +107,40 @@ func parseOldCredential(data []byte, keyfile string) (*Credentials, error) {
 	return &creds, nil
 }
 
+func parseCredential(data []byte, keyfile string) (*Credentials, error) {
+	var creds Credentials
+	err := json.Unmarshal(data, &creds)
+	if err != nil {
+		return nil, err
+	}
+
+	privKey, err := loadPrivateKey(keyfile)
+	if err != nil {
+		return nil, err
+	}
+
+	tmp, err := CredulousDecode(creds.Encryptions[0].Ciphertext, privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var cred Credential
+	err = json.Unmarshal([]byte(tmp), &cred)
+	if err != nil {
+		return nil, err
+	}
+
+	creds.Encryptions[0].decoded = cred
+	return &creds, nil
+}
+
 func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	if !strings.Contains(string(b), "Version:") {
+	if !strings.Contains(string(b), "Version") {
 		creds, err := parseOldCredential(b, keyfile)
 		if err != nil {
 			return nil, err
@@ -121,7 +148,12 @@ func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 		return creds, nil
 	}
 
-	return &Credentials{}, nil
+	creds, err := parseCredential(b, keyfile)
+	if err != nil {
+		return nil, err
+	}
+
+	return creds, nil
 }
 
 func (cred Credentials) WriteToDisk(filename string) (err error) {
@@ -144,21 +176,36 @@ func (cred Credentials) Display(output io.Writer) {
 		cred.Encryptions[0].decoded.KeyId, cred.Encryptions[0].decoded.SecretKey)
 }
 
-func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) (err error) {
-	auth := aws.Auth{AccessKey: id, SecretKey: secret}
-	instance := iam.New(auth, aws.APSoutheast2)
-	if username == "" {
-		username, err = getAWSUsername(instance)
+func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
+
+	var key_create_date int64
+
+	if force {
+		key_create_date = time.Now().Unix()
+	} else {
+		auth := aws.Auth{AccessKey: id, SecretKey: secret}
+		instance := iam.New(auth, aws.APSoutheast2)
+		if username == "" {
+			username, err = getAWSUsername(instance)
+			if err != nil {
+				return err
+			}
+		}
+		if alias == "" {
+			alias, err = getAWSAccountAlias(instance)
+			if err != nil {
+				return err
+			}
+		}
+
+		date, _ := getKeyCreateDate(instance)
+		t, err := time.Parse("2006-01-02T15:04:05Z", date)
+		key_create_date = t.Unix()
 		if err != nil {
 			return err
 		}
 	}
-	if alias == "" {
-		alias, err = getAWSAccountAlias(instance)
-		if err != nil {
-			return err
-		}
-	}
+
 	fmt.Printf("saving credentials for %s@%s\n", username, alias)
 	secrets := Credential{
 		KeyId:     id,
@@ -172,11 +219,7 @@ func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) (
 	if err != nil {
 		return err
 	}
-	key_create_date, _ := getKeyCreateDate(instance)
-	t, err := time.Parse("2006-01-02T15:04:05Z", key_create_date)
-	if err != nil {
-		return err
-	}
+
 	enc_slice := []Encryption{}
 	enc_slice = append(enc_slice, Encryption{
 		Ciphertext:  encoded,
@@ -186,11 +229,11 @@ func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey) (
 		Version:          FORMAT_VERSION,
 		AccountAliasOrId: alias,
 		IamUsername:      username,
-		CreateTime:       key_create_date,
+		CreateTime:       fmt.Sprintf("%d", key_create_date),
 		Encryptions:      enc_slice,
 	}
 
-	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", t.Unix(), id[12:]))
+	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, id[12:]))
 	return nil
 }
 
