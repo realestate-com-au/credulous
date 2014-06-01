@@ -134,7 +134,7 @@ func parseCredential(data []byte, keyfile string) (*Credentials, error) {
 	}
 
 	if offset < 0 {
-		err := errors.New("Cannot find an SSH key to decrypt on this system")
+		err := errors.New("The SSH key specified cannot decrypt those credentials")
 		return nil, err
 	}
 
