@@ -212,6 +212,23 @@ func main() {
 			},
 		},
 		{
+			Name:  "current",
+			Usage: "Show the username and alias of the currently-loaded credentials",
+			Action: func(c *cli.Context) {
+				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				cred := Credential{
+					KeyId:     AWSAccessKeyId,
+					SecretKey: AWSSecretAccessKey,
+				}
+				username, alias, err := getAWSUsernameAndAlias(cred)
+				if err != nil {
+					panic_the_err(err)
+				}
+				fmt.Printf("%s@%s\n", username, alias)
+			},
+		},
+		{
 			Name:  "display",
 			Usage: "Display loaded AWS credentials",
 			Action: func(c *cli.Context) {

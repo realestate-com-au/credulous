@@ -15,6 +15,26 @@ type Instancer interface {
 	ListAccountAliases() (*iam.AccountAliasesResp, error)
 }
 
+func getAWSUsernameAndAlias(cred Credential) (username, alias string, err error) {
+	auth := aws.Auth{
+		AccessKey: cred.KeyId,
+		SecretKey: cred.SecretKey,
+	}
+	// Note: the region is irrelevant for IAM
+	instance := iam.New(auth, aws.APSoutheast2)
+	username, err = getAWSUsername(instance)
+	if err != nil {
+		return "", "", err
+	}
+
+	alias, err = getAWSAccountAlias(instance)
+	if err != nil {
+		return "", "", err
+	}
+
+	return username, alias, nil
+}
+
 func getAWSUsername(instance Instancer) (string, error) {
 	response, err := instance.GetUser("")
 	if err != nil {
