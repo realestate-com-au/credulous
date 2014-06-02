@@ -217,6 +217,10 @@ func main() {
 			Action: func(c *cli.Context) {
 				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
+					err := errors.New("No amazon credentials are currently in your environment")
+					panic_the_err(err)
+				}
 				cred := Credential{
 					KeyId:     AWSAccessKeyId,
 					SecretKey: AWSSecretAccessKey,
