@@ -4,7 +4,8 @@ MOCK_CONFIG=epel-6-x86_64
 SHELL=/bin/bash
 DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ print $$3 }' | cut -f2 -d\' )
 
-SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion
+SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion \
+	credulous.md
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 	testkey testkey.pub credential.json newcreds.json
 
@@ -49,9 +50,10 @@ sources:
 debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
-	mkdir -p debian-pkg/DEBIAN/usr/bin
+	mkdir -p debian-pkg/DEBIAN/usr/bin debian-pkg/DEBIAN/usr/share/man/man1
 	cp $(HOME)/gopath/bin/credulous debian-pkg/DEBIAN/usr/bin
 	chmod 0755 debian-pkg/DEBIAN/usr/bin/credulous
+	pandoc -s -w man credulous.md -o debian-pkg/DEBIAN/usr/share/man/man1/credulous.1
 	dpkg-deb --build debian-pkg
 	mv debian-pkg.deb $(NAME)_$(VERSION)_amd64.deb
 
