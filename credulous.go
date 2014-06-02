@@ -121,7 +121,7 @@ func parseEnvironmentArgs(c *cli.Context) (map[string]string, error) {
 			log.Print("WARNING: Skipping env argument " + arg + " -- not in NAME=value format")
 			continue
 		}
-		parts := strings.Split(arg, "=")
+		parts := strings.SplitN(arg, "=", 2)
 		envMap[parts[0]] = parts[1]
 	}
 	return envMap, nil
