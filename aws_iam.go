@@ -23,8 +23,6 @@ func getAWSUsername(instance Instancer) (string, error) {
 	return response.User.Name, nil
 }
 
-type myAuth aws.Auth
-
 func getKeyCreateDate(instance Instancer) (string, error) {
 	response, err := instance.AccessKeys("")
 	panic_the_err(err)
