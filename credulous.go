@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"code.google.com/p/go.crypto/ssh"
@@ -16,6 +17,8 @@ import (
 	"code.google.com/p/gopass"
 	"github.com/codegangsta/cli"
 )
+
+const ENV_PATTERN string = "^[A-Za-z_][A-Za-z0-9_]*=.*"
 
 func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 	var err error
@@ -103,6 +106,27 @@ func parseUserAndAccount(c *cli.Context) (username string, account string, err e
 	return username, account, nil
 }
 
+func parseEnvironmentArgs(c *cli.Context) (map[string]string, error) {
+	if c.StringSlice("env") == nil {
+		return nil, nil
+	}
+
+	envMap := make(map[string]string)
+	for _, arg := range c.StringSlice("env") {
+		match, err := regexp.Match(ENV_PATTERN, []byte(arg))
+		if err != nil {
+			return nil, err
+		}
+		if !match {
+			log.Print("WARNING: Skipping env argument " + arg + " -- not in NAME=value format")
+			continue
+		}
+		parts := strings.Split(arg, "=")
+		envMap[parts[0]] = parts[1]
+	}
+	return envMap, nil
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
@@ -134,11 +158,16 @@ func main() {
 					panic_the_err(err)
 				}
 
+				envmap, err := parseEnvironmentArgs(c)
+				if err != nil {
+					panic_the_err(err)
+				}
+
 				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 				if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
-					fmt.Println("Can't save, no credentials in the environment")
-					os.Exit(1)
+					err := errors.New("Can't save, no credentials in the environment")
+					panic_the_err(err)
 				}
 				pubkeyString, err := ioutil.ReadFile(pubkeyFile)
 				panic_the_err(err)
@@ -146,6 +175,7 @@ func main() {
 				cred := Credential{
 					KeyId:     AWSAccessKeyId,
 					SecretKey: AWSSecretAccessKey,
+					EnvVars:   envmap,
 				}
 				err = SaveCredentials(cred, username, account, pubkey, c.Bool("force"))
 				panic_the_err(err)

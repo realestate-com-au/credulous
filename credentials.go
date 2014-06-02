@@ -194,6 +194,9 @@ func (cred OldCredential) Display(output io.Writer) {
 func (cred Credentials) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n",
 		cred.Encryptions[0].decoded.KeyId, cred.Encryptions[0].decoded.SecretKey)
+	for key, val := range cred.Encryptions[0].decoded.EnvVars {
+		fmt.Fprintf(output, "export %s=%s\n", key, val)
+	}
 }
 
 func SaveCredentials(cred Credential, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
