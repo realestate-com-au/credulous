@@ -121,7 +121,7 @@ func parseEnvironmentArgs(c *cli.Context) (map[string]string, error) {
 			log.Print("WARNING: Skipping env argument " + arg + " -- not in NAME=value format")
 			continue
 		}
-		parts := strings.Split(arg, "=")
+		parts := strings.SplitN(arg, "=", 2)
 		envMap[parts[0]] = parts[1]
 	}
 	return envMap, nil
@@ -217,6 +217,10 @@ func main() {
 			Action: func(c *cli.Context) {
 				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
 				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+				if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
+					err := errors.New("No amazon credentials are currently in your environment")
+					panic_the_err(err)
+				}
 				cred := Credential{
 					KeyId:     AWSAccessKeyId,
 					SecretKey: AWSSecretAccessKey,
