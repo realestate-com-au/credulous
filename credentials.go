@@ -134,7 +134,7 @@ func parseCredential(data []byte, keyfile string) (*Credentials, error) {
 	}
 
 	if offset < 0 {
-		err := errors.New("Cannot find an SSH key to decrypt on this system")
+		err := errors.New("The SSH key specified cannot decrypt those credentials")
 		return nil, err
 	}
 
@@ -194,16 +194,19 @@ func (cred OldCredential) Display(output io.Writer) {
 func (cred Credentials) Display(output io.Writer) {
 	fmt.Fprintf(output, "export AWS_ACCESS_KEY_ID=%v\nexport AWS_SECRET_ACCESS_KEY=%v\n",
 		cred.Encryptions[0].decoded.KeyId, cred.Encryptions[0].decoded.SecretKey)
+	for key, val := range cred.Encryptions[0].decoded.EnvVars {
+		fmt.Fprintf(output, "export %s=%s\n", key, val)
+	}
 }
 
-func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
+func SaveCredentials(cred Credential, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
 
 	var key_create_date int64
 
 	if force {
 		key_create_date = time.Now().Unix()
 	} else {
-		auth := aws.Auth{AccessKey: id, SecretKey: secret}
+		auth := aws.Auth{AccessKey: cred.KeyId, SecretKey: cred.SecretKey}
 		instance := iam.New(auth, aws.APSoutheast2)
 		if username == "" {
 			username, err = getAWSUsername(instance)
@@ -227,11 +230,7 @@ func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey, f
 	}
 
 	fmt.Printf("saving credentials for %s@%s\n", username, alias)
-	secrets := Credential{
-		KeyId:     id,
-		SecretKey: secret,
-	}
-	plaintext, err := json.Marshal(secrets)
+	plaintext, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
@@ -253,7 +252,7 @@ func SaveCredentials(id, secret, username, alias string, pubkey ssh.PublicKey, f
 		Encryptions:      enc_slice,
 	}
 
-	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, id[12:]))
+	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))
 	return nil
 }
 
