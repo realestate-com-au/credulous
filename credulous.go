@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,6 +72,37 @@ func getAccountAndUserName(c *cli.Context) (string, string, error) {
 	}
 }
 
+func parseUserAndAccount(c *cli.Context) (username string, account string, err error) {
+	if (c.String("username") == "" || c.String("account") == "") && c.Bool("force") {
+		err = errors.New("Must specify both username and account with force")
+		return "", "", err
+	}
+
+	// if username OR account were specified, but not both, complain
+	if (c.String("username") != "" && c.String("account") == "") ||
+		(c.String("username") == "" && c.String("account") != "") {
+		if c.Bool("force") {
+			err = errors.New("Must specify both username and account for force save")
+		} else {
+			err = errors.New("Must use force save when specifying username or account")
+		}
+		return "", "", err
+	}
+
+	// if username/account were specified, but force wasn't set, complain
+	if c.String("username") != "" && c.String("account") != "" {
+		if !c.Bool("force") {
+			err = errors.New("Cannot specify username and/or account without force")
+			return "", "", err
+		} else {
+			log.Print("WARNING: saving credentials without verifying username or account alias")
+			username = c.String("username")
+			account = c.String("account")
+		}
+	}
+	return username, account, nil
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
@@ -83,6 +115,7 @@ func main() {
 			Usage: "Save AWS credentials",
 			Flags: []cli.Flag{
 				cli.StringFlag{"key, k", "", "SSH public key"},
+				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "Environment variables to set in the form VAR=value"},
 				cli.BoolFlag{"force, f", "Force saving without validating username or account.\n" +
 					"\tYou MUST specify -u username -a account"},
 				cli.StringFlag{"username, u", "", "Username (for use with '--force')"},
@@ -96,34 +129,9 @@ func main() {
 					pubkeyFile = c.String("key")
 				}
 
-				var username, account string
-
-				if (c.String("username") == "" || c.String("account") == "") && c.Bool("force") {
-					fmt.Println("Must specify both username and account with force")
-					os.Exit(1)
-				}
-
-				// if username OR account were specified, but not both, complain
-				if (c.String("username") != "" && c.String("account") == "") ||
-					(c.String("username") == "" && c.String("account") != "") {
-					if c.Bool("force") {
-						fmt.Println("Must specify both username and account for force save")
-					} else {
-						fmt.Println("Must use force save when specifying username or account")
-					}
-					os.Exit(1)
-				}
-
-				// if username/account were specified, but force wasn't set, complain
-				if c.String("username") != "" && c.String("account") != "" {
-					if !c.Bool("force") {
-						fmt.Println("Cannot specify username and/or account without force")
-						os.Exit(1)
-					} else {
-						fmt.Println("WARNING: saving credentials without verifying username or account alias")
-						username = c.String("username")
-						account = c.String("account")
-					}
+				username, account, err := parseUserAndAccount(c)
+				if err != nil {
+					panic_the_err(err)
 				}
 
 				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
