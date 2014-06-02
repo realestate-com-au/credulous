@@ -1,5 +1,5 @@
 % credulous(1) | Version ==VERSION==
-% Colin Panisset, Mike Bailey, REA Group
+% Colin Panisset, Mike Bailey et. al., REA Group
 % Jun 2, 2014
 
 # NAME

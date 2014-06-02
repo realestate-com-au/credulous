@@ -45,11 +45,13 @@ rpmbuild: sources
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:
 	@echo "Building for version '$(VERSION)'"
+	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
 	tar czvf $(TGZ) --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
 
 debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
+	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
 	mkdir -p debian-pkg/DEBIAN/usr/bin debian-pkg/DEBIAN/usr/share/man/man1
 	cp $(HOME)/gopath/bin/credulous debian-pkg/DEBIAN/usr/bin
 	chmod 0755 debian-pkg/DEBIAN/usr/bin/credulous
