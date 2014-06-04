@@ -28,7 +28,7 @@ Download your [Linux package](https://github.com/realestate-com-au/credulous/rel
 If you are using brew you can use:
 
 ```
-brew install https://raw.githubusercontent.com/realestate-com-au/credulous/master/brew/credulous.rb
+brew install https://raw.githubusercontent.com/realestate-com-au/credulous-brew/master/credulous.rb
 ```
 
 #### Bash Completion (OSX)
