@@ -11,9 +11,8 @@ script:
   - ./generate-pkgs
 env:
   global:
-    secure:
-      - "atByW9YBuj/QUIxp0UtIM3hrvHN2mxReTs08VCIbeQCulct8FVU+/MRKTDAsP9gGT1jbKj7EXn77EoWWZBChOUhLK3Nl87UZEN78wDejkG1/vvMDwAcLmRXgAbEoJ0Zqzf/4kspdh3w7jb97TS+5Zf/PSlc7tvl2SUASvnz/jYE="
-      - "fF8fY8WqPd3q8Xr6QTmYK9JK5nyDEAPw9X8sPkZVRWbUNBQWRUhk2soPBRQnvWQ5s+KsdLdAuXbirwqFj60SHnl9JxxxuH6a4KDxlRQiaufUWuwlGtwH3er4CqiXi5hZih+6W8zPvK45hF1XC+hDzKfMP3AwslRFSxtqUjShPKA="
-      - "z+U6xqj6OsBlclYFnGUttVtkdiOI1zCe6B7njuo5k+nOvs0+3VG3zfsk569gWYerIK0VEqkfZc1EcuxcjrpHmyqI0Nq3lJK4UYCyF/xuNnoUvswMRCOpe3Wplxzja/xCcI2gTu6gjz80e2/YME+sU7DvIE4L6EPl3nJakyI3Osw="
+    - secure: "atByW9YBuj/QUIxp0UtIM3hrvHN2mxReTs08VCIbeQCulct8FVU+/MRKTDAsP9gGT1jbKj7EXn77EoWWZBChOUhLK3Nl87UZEN78wDejkG1/vvMDwAcLmRXgAbEoJ0Zqzf/4kspdh3w7jb97TS+5Zf/PSlc7tvl2SUASvnz/jYE="
+    - secure: "fF8fY8WqPd3q8Xr6QTmYK9JK5nyDEAPw9X8sPkZVRWbUNBQWRUhk2soPBRQnvWQ5s+KsdLdAuXbirwqFj60SHnl9JxxxuH6a4KDxlRQiaufUWuwlGtwH3er4CqiXi5hZih+6W8zPvK45hF1XC+hDzKfMP3AwslRFSxtqUjShPKA="
+    - secure: "z+U6xqj6OsBlclYFnGUttVtkdiOI1zCe6B7njuo5k+nOvs0+3VG3zfsk569gWYerIK0VEqkfZc1EcuxcjrpHmyqI0Nq3lJK4UYCyF/xuNnoUvswMRCOpe3Wplxzja/xCcI2gTu6gjz80e2/YME+sU7DvIE4L6EPl3nJakyI3Osw="
 after_success:
   - .travis/github-release.sh "$TRAVIS_REPO_SLUG" "`git describe`" true *.rpm *.deb
