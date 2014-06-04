@@ -7,3 +7,5 @@ credulous
 *.tgz
 *.1
 *.mde
+credulous.md-e
+rpm/credulous.spec
