@@ -18,10 +18,12 @@ workflow.
 
 ## Installation
 
-Download your [platform specific app](https://github.com/realestate-com-au/credulous/releases)
+### For Linux (.RPM or .DEB packages)
+
+Download your [Linux package](https://github.com/realestate-com-au/credulous/releases)
 
 
-### Using brew
+### Using brew (OSX)
 
 If you are using brew you can use:
 
@@ -29,7 +31,7 @@ If you are using brew you can use:
 brew install https://raw.githubusercontent.com/realestate-com-au/credulous/master/brew/credulous.rb
 ```
 
-### Bash Completion
+#### Bash Completion (OSX)
 
 Bash completion for subcommands and credentials is available (but waiting on inclusion in packages).
 
@@ -37,6 +39,9 @@ Till then, `source credulous.bash_completion` will do the trick. OSX users will 
 
 
 ## Usage
+
+You can have a [look at the manual
+page](https://github.com/realestate-com-au/credulous/blob/master/credulous.md), if that's your thing.
 
 Storing your current credentials in Credulous
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 if [ -f /etc/redhat-release ]; then
     sudo yum install -y mock
 elif [ -f /etc/debian_version ]; then
@@ -31,6 +33,7 @@ fi
 # This is annoying; Travis-CI uses ubuntu 12.04 for its build agents
 # and 12.04 doesn't have mock. 10.04 did, and 14.04 does, but not
 # anything in between. So the nastiness above ...
+echo $TRAVIS_BUILD_NUMBER > travis_build_number
 sudo make mock
 
 if [ $? -ne 0 ]; then
