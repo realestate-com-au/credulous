@@ -21,13 +21,16 @@ workflow.
 Download your [Linux package](https://github.com/realestate-com-au/credulous/releases)
 
 
-### Using brew (OSX)
+### For OSX
 
-If you are using brew you can use:
+If you are using homebrew you can use:
 
 ```
 brew install https://raw.githubusercontent.com/realestate-com-au/credulous-brew/master/credulous.rb
 ```
+
+Note that brew will **not** install the wrapper. You will have to install that manually, by copying
+the contents of `wrapper.bash` into your `$HOME/.bashrc`
 
 #### Bash Completion (OSX)
 
