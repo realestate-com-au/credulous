@@ -9,6 +9,8 @@ SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion \
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 	testkey testkey.pub credential.json newcreds.json
 
+DOC=credulous.md
+MAN=credulous.1
 SPEC=rpm/credulous.spec
 SPEC_TMPL=rpm/credulous.spec.tmpl
 NAME=$(shell grep '^Name:' $(SPEC_TMPL) | awk '{ print $$2 }' )
@@ -25,10 +27,25 @@ MOCK_SRPM=$(NVR).src.rpm
 RPM=$(NVR).x86_64.rpm
 TGZ=$(NAME)-$(VERSION).tar.gz
 
+INSTALLABLES=credulous credulous.bash_completion credulous.1
+
 .DEFAULT: all
 .PHONY: debianpkg
 
 all: mock
+
+man: $(DOC)
+	sed -ie 's/==VERSION==/$(VERSION)/' $(DOC)
+	pandoc -s -w man $(DOC) -o $(MAN)
+
+osx_binaries: $(SRCS) $(TESTS)
+	@echo "Building for OSX"
+	go get -t
+	go test
+	go build
+
+osx: man osx_binaries
+	tar zcvf credulous-$(VERSION)-osx.tgz $(INSTALLABLES)
 
 # This is a dirty hack for building on ubuntu build agents in Travis.
 rpmbuild: sources
