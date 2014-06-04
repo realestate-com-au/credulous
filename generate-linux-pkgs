@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 if [ -f /etc/redhat-release ]; then
     sudo yum install -y mock
 elif [ -f /etc/debian_version ]; then
