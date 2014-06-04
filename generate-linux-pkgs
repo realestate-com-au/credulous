@@ -46,4 +46,6 @@ fi
 # This should go fairly smoothly, give we're building a debian pkg on a debian box
 sudo make debianpkg
 
-aws s3 cp *.rpm *.deb s3://credulous
+for pkg in *.rpm *.deb; do
+    aws s3 cp $pkg s3://credulous
+done
