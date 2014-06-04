@@ -30,7 +30,7 @@ brew install https://raw.githubusercontent.com/realestate-com-au/credulous-brew/
 ```
 
 Note that brew will **not** install the wrapper. You will have to install that manually, by copying
-the contents of `wrapper.bash` into your `$HOME/.bashrc`
+the contents of [wrapper.bash](https://github.com/realestate-com-au/credulous/blob/master/wrapper.bash) into your `$HOME/.bashrc`
 
 #### Bash Completion (OSX)
 
