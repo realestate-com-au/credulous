@@ -4,11 +4,7 @@
 #
 
 cred () {
-    if [ -z "$GOBIN" ]; then
-        echo "GOBIN is not set"
-        return 1
-    fi
-    RES=$( $GOBIN/credulous source $@)
+    RES=$( credulous $@)
     if [ $? -eq 0 ]; then
         echo -n "Loading AWS creds into current environment..."
         eval "$RES"
