@@ -14,10 +14,12 @@ MAN=credulous.1
 SPEC=rpm/credulous.spec
 SPEC_TMPL=rpm/credulous.spec.tmpl
 NAME=$(shell grep '^Name:' $(SPEC_TMPL) | awk '{ print $$2 }' )
-VERSION=$(shell git describe --abbrev=0 2>/dev/null )
-ifeq ($(strip $(VERSION)), )
-	VERSION=$(shell git describe --tags --abbrev=0 )
+BUILD_NR=$(TRAVIS_BUILD_NUMBER)
+ifeq ($(strip $(BUILD_NUMBER)), )
+BUILD_NR=unknown
 endif
+VERS=$(shell cat VERSION 2>/dev/null )
+VERSION=$(VERS).$(BUILD_NR)
 RELEASE=$(shell grep '^Release:' $(SPEC_TMPL) | awk '{ print $$2 }' | sed -e 's/%{?dist}/.$(DIST)/' )
 
 MOCK_RESULT=/var/lib/mock/$(MOCK_CONFIG)/result
