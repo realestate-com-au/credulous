@@ -1,6 +1,6 @@
 #!/bin/bash
 
-env
+env | egrep -v "AWS_|TOKEN"
 
 case "x$TRAVIS_OS_NAME" in
     xlinux) ./generate-linux-pkgs; exit $? ;;
