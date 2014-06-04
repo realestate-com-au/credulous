@@ -4,3 +4,6 @@ credulous
 *.tar.gz
 *.swp
 .idea/
+*.tgz
+*.1
+*.mde
