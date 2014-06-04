@@ -46,6 +46,11 @@ fi
 # This should go fairly smoothly, give we're building a debian pkg on a debian box
 sudo make debianpkg
 
+if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+    echo "NO AWS CREDENTIALS -- NOT UPLOADING TO S3"
+    exit 0
+fi
+
 for pkg in *.rpm *.deb; do
     aws s3 cp $pkg s3://credulous
 done
