@@ -14,7 +14,8 @@ MAN=credulous.1
 SPEC=rpm/credulous.spec
 SPEC_TMPL=rpm/credulous.spec.tmpl
 NAME=$(shell grep '^Name:' $(SPEC_TMPL) | awk '{ print $$2 }' )
-BUILD_NR=$(TRAVIS_BUILD_NUMBER)
+# Because we run under sudo, environment variables don't make it through
+BUILD_NR=$(shell cat travis_build_number)
 ifeq ($(strip $(BUILD_NUMBER)), )
 BUILD_NR=unknown
 endif
