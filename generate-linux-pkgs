@@ -3,13 +3,14 @@
 set -x
 
 if [ -f /etc/redhat-release ]; then
-    sudo yum install -y mock
+    sudo yum install -y mock python-pip
+    sudo pip-python install --upgrade awscli
 elif [ -f /etc/debian_version ]; then
     # Ooh, this is nasty
     # Manually pre-install dependencies
     sudo apt-get install adduser python python-decoratortools rpm usermode python-iniparse \
         python-libxml2 python-rpm python-sqlite python-sqlitecachec python-urlgrabber \
-        pandoc
+        pandoc python-pip
     # ... and now install mock from lucid (winces)
     wget http://mirrors.kernel.org/ubuntu/pool/universe/y/yum-utils/yum-utils_1.1.31-2_all.deb
     wget http://mirrors.kernel.org/ubuntu/pool/universe/m/mock/mock_1.1.33-1_all.deb
@@ -24,6 +25,7 @@ elif [ -f /etc/debian_version ]; then
     sudo chgrp -R mock /var/lib/mock
     sudo chmod 2755 /var/lib/mock
     # clean up so we don't release these .debs as well
+    sudo pip install --upgrade awscli
     rm *.deb
 else
     echo "I don't know what distro I'm on"
@@ -43,3 +45,12 @@ fi
 
 # This should go fairly smoothly, give we're building a debian pkg on a debian box
 sudo make debianpkg
+
+if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+    echo "NO AWS CREDENTIALS -- NOT UPLOADING TO S3"
+    exit 0
+fi
+
+for pkg in *.rpm *.deb; do
+    aws s3 cp $pkg s3://credulous
+done
