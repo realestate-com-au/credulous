@@ -8,9 +8,7 @@ class Credulous < Formula
 
   def install
     bin.install "credulous"
-    # XXX Enable following line on next release
-    # It fails currently as the bash_completion file is not yet present
-    # bash_completion.install "credulous.bash_completion" => "credulous"
+    bash_completion.install "credulous.bash_completion" => "credulous"
   end
 
   test do
