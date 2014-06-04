@@ -16,7 +16,7 @@ SPEC_TMPL=rpm/credulous.spec.tmpl
 NAME=$(shell grep '^Name:' $(SPEC_TMPL) | awk '{ print $$2 }' )
 # Because we run under sudo, environment variables don't make it through
 BUILD_NR=$(shell cat travis_build_number)
-ifeq ($(strip $(BUILD_NUMBER)), )
+ifeq ($(strip $(BUILD_NR)), )
 BUILD_NR=unknown
 endif
 VERS=$(shell cat VERSION 2>/dev/null )
