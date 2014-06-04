@@ -35,8 +35,7 @@ INSTALLABLES=credulous credulous.bash_completion credulous.1
 all: mock
 
 man: $(DOC)
-	sed -ie 's/==VERSION==/$(VERSION)/' $(DOC)
-	pandoc -s -w man $(DOC) -o $(MAN)
+	sed -e 's/==VERSION==/$(VERSION)/' $(DOC) | pandoc -s -w man - -o $(MAN)
 
 osx_binaries: $(SRCS) $(TESTS)
 	@echo "Building for OSX"
