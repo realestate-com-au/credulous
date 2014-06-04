@@ -6,8 +6,6 @@ corresponding **private SSH key** is able to see and use them. Furthermore the t
 enable the user to **easily rotate** their current credentials without breaking the user's current
 workflow.
 
-![Credulous Security](https://github.com/realestate-com-au/credulous/raw/master/site/credulous-security.png)
-
 ## Main Features
 
 * Your IAM Credentials are securely encrypted on disk.
@@ -94,3 +92,4 @@ Or just run
 ## Roadmap
 See [here](https://github.com/realestate-com-au/credulous/wiki/Roadmap)
 
+![Credulous Security](https://github.com/realestate-com-au/credulous/raw/master/site/credulous-security.png)
