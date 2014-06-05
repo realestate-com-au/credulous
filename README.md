@@ -24,14 +24,8 @@ Download your [Linux package](https://github.com/realestate-com-au/credulous/rel
 ### For OSX
 
 If you are using homebrew you can follow these steps to install Credulous
-1. 
-```
-brew install bash_completion
-```
-1. 
-```
-brew install https://raw.githubusercontent.com/realestate-com-au/credulous-brew/master/credulous.rb
-```
+1. ```$ brew install bash_completion```
+1. ```$ brew install https://raw.githubusercontent.com/realestate-com-au/credulous-brew/master/credulous.rb```
 1. Add the following lines to your ~/.bash_profile:
 ```
 if [ -f $(brew --prefix)/etc/profile.d/credulous.sh ]; then
