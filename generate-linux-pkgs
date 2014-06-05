@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -ex
 
 if [ -f /etc/redhat-release ]; then
     sudo yum install -y mock python-pip

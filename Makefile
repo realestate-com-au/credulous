@@ -71,13 +71,13 @@ debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
 	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
-	mkdir -p debian-pkg/DEBIAN/usr/bin \
-		debian-pkg/DEBIAN/usr/share/man/man1 \
-		debian-pkg/DEBIAN/etc/profile.d 
-	cp $(HOME)/gopath/bin/credulous debian-pkg/DEBIAN/usr/bin
-	cp credulous.sh debian-pkg/DEBIAN/etc/profile.d
-	chmod 0755 debian-pkg/DEBIAN/usr/bin/credulous
-	pandoc -s -w man credulous.md -o debian-pkg/DEBIAN/usr/share/man/man1/credulous.1
+	mkdir -p debian-pkg/usr/bin \
+		debian-pkg/usr/share/man/man1 \
+		debian-pkg/etc/profile.d
+	cp $(HOME)/gopath/bin/credulous debian-pkg/usr/bin
+	cp credulous.sh debian-pkg/etc/profile.d
+	chmod 0755 debian-pkg/usr/bin/credulous
+	pandoc -s -w man credulous.md -o debian-pkg/usr/share/man/man1/credulous.1
 	dpkg-deb --build debian-pkg
 	mv debian-pkg.deb $(NAME)_$(VERSION)_amd64.deb
 
