@@ -73,9 +73,11 @@ debianpkg:
 	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
 	mkdir -p debian-pkg/usr/bin \
 		debian-pkg/usr/share/man/man1 \
+		debian-pkg/etc/bash_completion.d \
 		debian-pkg/etc/profile.d
 	cp $(HOME)/gopath/bin/credulous debian-pkg/usr/bin
 	cp credulous.sh debian-pkg/etc/profile.d
+	cp credulous.bash-completion debian-pkg/etc/bash_completion.d
 	chmod 0755 debian-pkg/usr/bin/credulous
 	pandoc -s -w man credulous.md -o debian-pkg/usr/share/man/man1/credulous.1
 	dpkg-deb --build debian-pkg
