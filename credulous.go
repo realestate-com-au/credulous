@@ -131,7 +131,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
 	app.Usage = "Secure AWS Credential Management"
-	app.Version = "0.2.0"
+	app.Version = "0.2.1"
 
 	app.Commands = []cli.Command{
 		{
