@@ -23,20 +23,27 @@ Download your [Linux package](https://github.com/realestate-com-au/credulous/rel
 
 ### For OSX
 
-If you are using homebrew you can use:
-
+If you are using homebrew you can follow these steps to install Credulous
+1. 
+```
+brew install bash_completion
+```
+1. 
 ```
 brew install https://raw.githubusercontent.com/realestate-com-au/credulous-brew/master/credulous.rb
 ```
-
-Note that brew will **not** install the wrapper. You will have to install that manually, by copying
-the contents of [wrapper.bash](https://github.com/realestate-com-au/credulous/blob/master/wrapper.bash) into your `$HOME/.bashrc`
+1. Add the following lines to your ~/.bash_profile:
+```
+if [ -f $(brew --prefix)/etc/profile.d/credulous.sh ]; then
+    . $(brew --prefix)/etc/profile.d/credulous.sh
+fi
+```
 
 #### Bash Completion (OSX)
 
-Bash completion for subcommands and credentials is available (but waiting on inclusion in packages).
+Bash completion for subcommands and credentials is available.
 
-Till then, `source credulous.bash_completion` will do the trick. OSX users will need to `brew install bash_completion`
+OSX users will need to `brew install bash_completion`
 
 
 ## Usage
