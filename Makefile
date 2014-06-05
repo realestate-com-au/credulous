@@ -75,7 +75,7 @@ debianpkg:
 		debian-pkg/DEBIAN/usr/share/man/man1 \
 		debian-pkg/DEBIAN/etc/profile.d 
 	cp $(HOME)/gopath/bin/credulous debian-pkg/DEBIAN/usr/bin
-	cp $(HOME)/credulous.sh debian-pkg/DEBIAN/etc/profile.d
+	cp credulous.sh debian-pkg/DEBIAN/etc/profile.d
 	chmod 0755 debian-pkg/DEBIAN/usr/bin/credulous
 	pandoc -s -w man credulous.md -o debian-pkg/DEBIAN/usr/share/man/man1/credulous.1
 	dpkg-deb --build debian-pkg
