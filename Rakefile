@@ -1,0 +1,4 @@
+desc "Get PKGs through s3 sync"
+task :sync do
+  sh "aws s3 sync s3://credulous s3/"
+end
