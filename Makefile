@@ -74,7 +74,7 @@ debianpkg:
 	mkdir -p debian-pkg/usr/bin \
 		debian-pkg/usr/share/man/man1 \
 		debian-pkg/etc/profile.d
-	cp $(GOPATH)/bin/credulous debian-pkg/usr/bin
+	cp $(HOME)/gopath/bin/credulous debian-pkg/usr/bin
 	cp credulous.sh debian-pkg/etc/profile.d
 	chmod 0755 debian-pkg/usr/bin/credulous
 	pandoc -s -w man credulous.md -o debian-pkg/usr/share/man/man1/credulous.1
