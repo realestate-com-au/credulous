@@ -34,6 +34,17 @@ if [ -f $(brew --prefix)/etc/profile.d/credulous.sh ]; then
 fi
 ```
 
+### Command completion
+
+Command completion makes credulous much more convenient to use.
+
+OSX: `brew install bash-completion`
+
+Centos: [Enable EPEL repo and install bash-completion](http://unix.stackexchange.com/questions/21135/package-bash-completion-missing-from-yum-in-centos-6)
+
+Debian/Ubuntu: bash-completion is installed and enabled by default. Enjoy!
+
+
 
 ## Usage
 
