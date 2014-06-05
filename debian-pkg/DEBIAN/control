@@ -1,4 +1,5 @@
 Package: credulous
+Depends: bash-completion
 Architecture: amd64
 Maintainer: Colin Panisset <colin.panisset@rea-group.com>
 Priority: optional
