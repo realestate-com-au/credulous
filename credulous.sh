@@ -1,7 +1,11 @@
 #!/bin/bash
 #
-# You should put this bit in your ~/.bashrc
+# credulous.sh
 #
+# Wrapper that sources output of 'credulous source' command into
+# current environment
+#
+# Source this from your ~/.bash_profile
 
 credulous () {
     BINARY=$( type -P credulous )

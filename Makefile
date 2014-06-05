@@ -30,7 +30,7 @@ MOCK_SRPM=$(NVR).src.rpm
 RPM=$(NVR).x86_64.rpm
 TGZ=$(NAME)-$(VERSION).tar.gz
 
-INSTALLABLES=credulous credulous.bash_completion credulous.1
+INSTALLABLES=credulous credulous.bash_completion credulous.1 credulous.sh
 
 .DEFAULT: all
 .PHONY: debianpkg
