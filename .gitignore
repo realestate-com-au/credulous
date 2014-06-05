@@ -9,3 +9,4 @@ credulous
 *.mde
 credulous.md-e
 travis_build_number
+pkg/

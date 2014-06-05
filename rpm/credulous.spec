@@ -36,7 +36,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_bindir} \
 
 cp credulous $RPM_BUILD_ROOT/%{_bindir}
 cp credulous.bash_completion $RPM_BUILD_ROOT/%{_sysconfdir}/bash_completion.d/credulous.bash_completion
-cp credulous.sh $RPM_BUILD_ROOT/%{_sysconfdir}/profile.d/
+cp credulous.sh $RPM_BUILD_ROOT/%{_sysconfdir}/profile.d/credulous.sh
 chmod 0755 $RPM_BUILD_ROOT/%{_bindir}/credulous
 cp credulous.1 $RPM_BUILD_ROOT/%{_mandir}/man1/credulous.1
 
