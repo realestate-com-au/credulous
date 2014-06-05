@@ -5,7 +5,7 @@ SHELL=/bin/bash
 DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ print $$3 }' | cut -f2 -d\' )
 
 SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion \
-	credulous.md
+	credulous.md credulous.sh
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 	testkey testkey.pub credential.json newcreds.json
 
@@ -71,8 +71,11 @@ debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
 	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
-	mkdir -p debian-pkg/DEBIAN/usr/bin debian-pkg/DEBIAN/usr/share/man/man1
+	mkdir -p debian-pkg/DEBIAN/usr/bin \
+		debian-pkg/DEBIAN/usr/share/man/man1 \
+		debian-pkg/DEBIAN/etc/profile.d 
 	cp $(HOME)/gopath/bin/credulous debian-pkg/DEBIAN/usr/bin
+	cp $(HOME)/credulous.sh debian-pkg/DEBIAN/etc/profile.d
 	chmod 0755 debian-pkg/DEBIAN/usr/bin/credulous
 	pandoc -s -w man credulous.md -o debian-pkg/DEBIAN/usr/share/man/man1/credulous.1
 	dpkg-deb --build debian-pkg
