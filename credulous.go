@@ -28,7 +28,9 @@ func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 
 	// we already emit the prompt to stderr; GetPass only emits to stdout
 	var passwd string
-	if passwd, err = gopass.GetPass(""); err != nil {
+	passwd, err = gopass.GetPass("")
+	fmt.Fprintln(os.Stderr, "")
+	if err != nil {
 		return []byte(""), err
 	}
 
