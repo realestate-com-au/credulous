@@ -129,6 +129,49 @@ func parseEnvironmentArgs(c *cli.Context) (map[string]string, error) {
 	return envMap, nil
 }
 
+func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkey ssh.PublicKey, err error) {
+	var pubkeyFile string
+	if c.String("key") == "" {
+		pubkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
+	} else {
+		pubkeyFile = c.String("key")
+	}
+
+	username, account, err = parseUserAndAccount(c)
+	if err != nil {
+		return Credential{}, "", "", nil, err
+	}
+
+	envmap, err := parseEnvironmentArgs(c)
+	if err != nil {
+		return Credential{}, "", "", nil, err
+	}
+
+	AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
+	AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
+	if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
+		err := errors.New("Can't save, no credentials in the environment")
+		if err != nil {
+			return Credential{}, "", "", nil, err
+		}
+	}
+	pubkeyString, err := ioutil.ReadFile(pubkeyFile)
+	if err != nil {
+		return Credential{}, "", "", nil, err
+	}
+	pubkey, _, _, _, err = ssh.ParseAuthorizedKey([]byte(pubkeyString))
+	if err != nil {
+		return Credential{}, "", "", nil, err
+	}
+	cred = Credential{
+		KeyId:     AWSAccessKeyId,
+		SecretKey: AWSSecretAccessKey,
+		EnvVars:   envmap,
+	}
+
+	return cred, username, account, pubkey, nil
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "credulous"
@@ -148,41 +191,13 @@ func main() {
 				cli.StringFlag{"account, a", "", "Account alias (for use with '--force')"},
 			},
 			Action: func(c *cli.Context) {
-				var pubkeyFile string
-				if c.String("key") == "" {
-					pubkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
-				} else {
-					pubkeyFile = c.String("key")
-				}
-
-				username, account, err := parseUserAndAccount(c)
-				if err != nil {
-					panic_the_err(err)
-				}
-
-				envmap, err := parseEnvironmentArgs(c)
-				if err != nil {
-					panic_the_err(err)
-				}
-
-				AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
-				AWSSecretAccessKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
-				if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
-					err := errors.New("Can't save, no credentials in the environment")
-					panic_the_err(err)
-				}
-				pubkeyString, err := ioutil.ReadFile(pubkeyFile)
+				cred, username, account, pubkey, err := parseSaveArgs(c)
 				panic_the_err(err)
-				pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(pubkeyString))
-				cred := Credential{
-					KeyId:     AWSAccessKeyId,
-					SecretKey: AWSSecretAccessKey,
-					EnvVars:   envmap,
-				}
 				err = SaveCredentials(cred, username, account, pubkey, c.Bool("force"))
 				panic_the_err(err)
 			},
 		},
+
 		{
 			Name:  "source",
 			Usage: "Source AWS credentials",
@@ -213,6 +228,7 @@ func main() {
 				cred.Display(os.Stdout)
 			},
 		},
+
 		{
 			Name:  "current",
 			Usage: "Show the username and alias of the currently-loaded credentials",
@@ -234,6 +250,7 @@ func main() {
 				fmt.Printf("%s@%s\n", username, alias)
 			},
 		},
+
 		{
 			Name:  "display",
 			Usage: "Display loaded AWS credentials",
@@ -244,6 +261,7 @@ func main() {
 				fmt.Printf("AWS_SECRET_ACCESS_KEY: %s\n", AWSSecretAccessKey)
 			},
 		},
+
 		{
 			Name:  "list",
 			Usage: "List available AWS credentials",
@@ -259,6 +277,26 @@ func main() {
 				for _, cred := range set {
 					fmt.Println(cred)
 				}
+			},
+		},
+
+		{
+			Name:  "rotate",
+			Usage: "Rotate current AWS credentials, deleting the oldest",
+			Flags: []cli.Flag{
+				cli.StringFlag{"key, k", "", "SSH private key"},
+				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "Environment variables to set in the form VAR=value"},
+			},
+			Action: func(c *cli.Context) {
+				cred, _, _, pubkey, err := parseSaveArgs(c)
+				panic_the_err(err)
+				username, account, err := getAWSUsernameAndAlias(cred)
+				panic_the_err(err)
+				err = (&cred).rotateCredentials(username)
+				fmt.Printf("Got a cred for %s with ID %s\n", username, cred.KeyId)
+				panic_the_err(err)
+				err = SaveCredentials(cred, username, account, pubkey, c.Bool("force"))
+				panic_the_err(err)
 			},
 		},
 	}

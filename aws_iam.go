@@ -106,28 +106,3 @@ func verify_user(username string, instance Instancer) error {
 	err = errors.New("Cannot verify user: access keys are not for user " + username)
 	return err
 }
-
-func (creds Credentials) verifyUserAndAccount() error {
-	// need to check both the username and the account alias for the
-	// supplied creds match the passed-in username and account alias
-	auth := aws.Auth{
-		AccessKey: creds.Encryptions[0].decoded.KeyId,
-		SecretKey: creds.Encryptions[0].decoded.SecretKey,
-	}
-	// Note: the region is irrelevant for IAM
-	instance := iam.New(auth, aws.APSoutheast2)
-
-	// Make sure the account is who we expect
-	err := verify_account(creds.AccountAliasOrId, instance)
-	if err != nil {
-		return err
-	}
-
-	// Make sure the user is who we expect
-	err = verify_user(creds.IamUsername, instance)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}

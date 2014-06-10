@@ -199,6 +199,111 @@ func (cred Credentials) Display(output io.Writer) {
 	}
 }
 
+func (creds Credentials) verifyUserAndAccount() error {
+	// need to check both the username and the account alias for the
+	// supplied creds match the passed-in username and account alias
+	auth := aws.Auth{
+		AccessKey: creds.Encryptions[0].decoded.KeyId,
+		SecretKey: creds.Encryptions[0].decoded.SecretKey,
+	}
+	// Note: the region is irrelevant for IAM
+	instance := iam.New(auth, aws.APSoutheast2)
+
+	// Make sure the account is who we expect
+	err := verify_account(creds.AccountAliasOrId, instance)
+	if err != nil {
+		return err
+	}
+
+	// Make sure the user is who we expect
+	err = verify_user(creds.IamUsername, instance)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cred *Credential) deleteOldestAccessKey(username string) (err error) {
+	auth := aws.Auth{
+		AccessKey: cred.KeyId,
+		SecretKey: cred.SecretKey,
+	}
+	instance := iam.New(auth, aws.APSoutheast2)
+
+	allKeys, err := instance.AccessKeys(username)
+	if err != nil {
+		return err
+	}
+
+	// wtf?
+	if len(allKeys.AccessKeys) == 0 {
+		err = errors.New("Zero access keys found for this account -- cannot rotate")
+		return err
+	}
+
+	// only one key
+	if len(allKeys.AccessKeys) == 1 {
+		return nil
+	}
+
+	// find the oldest key
+	var oldestId string
+	var oldest int64
+	for _, key := range allKeys.AccessKeys {
+		t, err := time.Parse("2006-01-02T15:04:05Z", key.CreateDate)
+		key_create_date := t.Unix()
+		if err != nil {
+			return err
+		}
+		if oldest == 0 || key_create_date < oldest {
+			oldest = key_create_date
+			oldestId = key.Id
+		}
+	}
+
+	if oldestId == "" {
+		err = errors.New("Cannot find oldest key for this account, will not rotate")
+		return err
+	}
+
+	_, err = instance.DeleteAccessKey(oldestId, username)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cred *Credential) createNewAccessKey(username string) (err error) {
+	auth := aws.Auth{
+		AccessKey: cred.KeyId,
+		SecretKey: cred.SecretKey,
+	}
+	instance := iam.New(auth, aws.APSoutheast2)
+
+	resp, err := instance.CreateAccessKey(username)
+	if err != nil {
+		return err
+	}
+
+	cred.KeyId = resp.AccessKey.Id
+	cred.SecretKey = resp.AccessKey.Secret
+	return nil
+}
+
+func (cred *Credential) rotateCredentials(username string) (err error) {
+	err = cred.deleteOldestAccessKey(username)
+	if err != nil {
+		return err
+	}
+	err = cred.createNewAccessKey(username)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func SaveCredentials(cred Credential, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
 
 	var key_create_date int64
