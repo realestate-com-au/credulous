@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"code.google.com/p/go.crypto/ssh"
 
@@ -295,8 +294,6 @@ func main() {
 				panic_the_err(err)
 				err = (&cred).rotateCredentials(username)
 				panic_the_err(err)
-				// We have to wait a bit because credentials don't become active immediately
-				time.Sleep(10 * time.Second)
 				username, account, err = getAWSUsernameAndAlias(cred)
 				panic_the_err(err)
 				err = SaveCredentials(cred, username, account, pubkey, c.Bool("force"))

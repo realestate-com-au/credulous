@@ -20,6 +20,10 @@ import (
 
 const FORMAT_VERSION string = "2014-05-31"
 
+// How long to retry after rotating credentials for
+// new credentials to become active (in seconds)
+const ROTATE_TIMEOUT int = 30
+
 type Credentials struct {
 	Version          string
 	IamUsername      string
@@ -224,7 +228,9 @@ func (creds Credentials) verifyUserAndAccount() error {
 	return nil
 }
 
-func (cred *Credential) deleteOldestAccessKey(username string) (err error) {
+// Only delete the oldest key *if* the new key is valid; otherwise,
+// delete the newest key
+func (cred *Credential) deleteOneKey(username string) (err error) {
 	auth := aws.Auth{
 		AccessKey: cred.KeyId,
 		SecretKey: cred.SecretKey,
@@ -247,14 +253,20 @@ func (cred *Credential) deleteOldestAccessKey(username string) (err error) {
 		return nil
 	}
 
-	// find the oldest key
+	// Find out which key to delete.
 	var oldestId string
 	var oldest int64
+
 	for _, key := range allKeys.AccessKeys {
 		t, err := time.Parse("2006-01-02T15:04:05Z", key.CreateDate)
 		key_create_date := t.Unix()
 		if err != nil {
 			return err
+		}
+		// If we find an inactive one, just delete it
+		if key.Status == "Inactive" {
+			oldestId = key.Id
+			break
 		}
 		if oldest == 0 || key_create_date < oldest {
 			oldest = key_create_date
@@ -292,13 +304,31 @@ func (cred *Credential) createNewAccessKey(username string) (err error) {
 	return nil
 }
 
+// Potential conditions to handle here:
+// * AWS has one key
+//     * only generate a new key, do not delete the old one
+// * AWS has two keys
+//     * both are active and valid
+//     * new one is inactive
+//     * old one is inactive
+// * We successfully delete the oldest key, but fail in creating the new key (eg network, permission issues)
 func (cred *Credential) rotateCredentials(username string) (err error) {
-	err = cred.deleteOldestAccessKey(username)
+	err = cred.deleteOneKey(username)
 	if err != nil {
 		return err
 	}
 	err = cred.createNewAccessKey(username)
 	if err != nil {
+		return err
+	}
+	// Loop until the credentials are active
+	count := 0
+	for _, _, err = getAWSUsernameAndAlias(*cred); err != nil && count < ROTATE_TIMEOUT; _, _, err = getAWSUsernameAndAlias(*cred) {
+		time.Sleep(1 * time.Second)
+		count += 1
+	}
+	if err != nil {
+		err = errors.New("Timed out waiting for new credentials to become active")
 		return err
 	}
 	return nil
