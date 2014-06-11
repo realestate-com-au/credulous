@@ -12,14 +12,14 @@
 
 # DESCRIPTION
 
-Credulous manages AWS credentials for you, storing them securely 
+Credulous manages AWS credentials for you, storing them securely
 and retrieving them for placement in your shell runtime environment on
 demand so that they can be used by other tools.
 
 Credulous makes use of SSH RSA public keys to encrypt credentials at
 rest, and the corresponding private keys to decrypt them. It supports
 multiple AWS IAM users in multiple accounts, and provides the
-capability to store custom environment variables encrypted along with 
+capability to store custom environment variables encrypted along with
 each set of credentials.
 
 # COMMANDS
@@ -35,13 +35,16 @@ into the current shell runtime environment.
 **current** Query the AWS APIs using the current credentials and
 display the username and account alias.
 
+**rotate** Force a key rotation to occur -- credulous will delete one
+key and create a new one, saving the new credentials into the repository.
+
 **display** Show the currently loaded AWS credentials
 
 **list** Show a list of all stored `username@alias` credentials.
 
 # OPTIONS
 
-**-h**  
+**-h**
 **--help**
 
 > All commands take the `-h` or `--help` option to describe the command
@@ -49,14 +52,14 @@ display the username and account alias.
 
 ## Options for the save subcommand
 
-**-k \<keyfile\>**  
+**-k \<keyfile\>**
 **--key \<keyfile\>**
 
 > Specify the SSH public key to use in saving the current credentials.
 > If more than one key is specified, the credentials will be saved
 > multiple times, encrypted with each different public key.
 
-**-e \<VAR\>=\<value\>**  
+**-e \<VAR\>=\<value\>**
 **--env \<VAR\>=\<value\>**
 
 > Save the environment variable `VAR` with the value `value` along with
@@ -64,7 +67,7 @@ display the username and account alias.
 > save multiple different environment variables. All specified
 > environment variables are encrypted alongside the credentials.
 
-**-u \<username\>**  
+**-u \<username\>**
 **--username \<username\>**
 
 > Specify the AWS IAM username for the current credentials. Note that
@@ -74,7 +77,7 @@ display the username and account alias.
 > __must__ also specify **--account** and **--force** to prevent
 > credulous querying AWS.
 
-**-a \<account\>**  
+**-a \<account\>**
 **--account \<account\>**
 
 > Specify the AWS account alias. If you specify this option, you
@@ -82,7 +85,7 @@ display the username and account alias.
 > credulous will query AWS for the account alias. If no account alias
 > has been defined, credulous will use the numeric account ID instead.
 
-**-f**  
+**-f**
 **--force**
 
 > Do not attempt to verify the username or account alias/ID with AWS
@@ -100,22 +103,22 @@ been saved, you will have to specify the credentials to source.
 Note that if the SSH private key used to decrypt the credentials is not
 protected with a passphrase, credulous will issue a warning.
 
-**-k \<keyfile\>**  
+**-k \<keyfile\>**
 **--key \<keyfile\>**
 
 > Use the specified SSH RSA private key to decrypt the credentials.
 
-**-a \<account\>**  
+**-a \<account\>**
 **--account \<account\>**
 
 > Load credentials for the named account
 
-**-u \<username\>**  
+**-u \<username\>**
 **--username \<username\>**
 
 > Load credentials for the named username.
 
-**-f**  
+**-f**
 **--force**
 
 > Do not attempt to verify that the loaded credentials match the
@@ -126,7 +129,7 @@ protected with a passphrase, credulous will issue a warning.
 > API calls were made using those credentials, leading to a potential
 > leakage of information, and financial or operational damage.
 
-**-c \<username\>@\<account\>**  
+**-c \<username\>@\<account\>**
 **--credentials \<username\>@\<account\>**
 
 > Load the specified credentials. This is the default action for the
@@ -136,6 +139,23 @@ protected with a passphrase, credulous will issue a warning.
 ## Options for the current subcommand
 
 There are no options for the `current` subcommand.
+
+## Options for the rotate subcommand
+
+**-k \<keyfile\>**
+**--key \<keyfile\>**
+
+> Specify the SSH public key to use in saving the new credentials.
+> If more than one key is specified, the credentials will be saved
+> multiple times, encrypted with each different public key.
+
+**-e \<VAR\>=\<value\>**
+**--env \<VAR\>=\<value\>**
+
+> Save the environment variable `VAR` with the value `value` along with
+> the encrypted credentials. The option can be used multiple times to
+> save multiple different environment variables. All specified
+> environment variables are encrypted alongside the credentials.
 
 ## Options for the display subcommand
 
@@ -186,7 +206,7 @@ Mujtaba Hussain, Stephen Moore.
 
 # BUGS
 
-Please report bugs via the GitHub page at 
+Please report bugs via the GitHub page at
 https://github.com/realestate-com-au/credulous/issues
 
 # COPYRIGHT
