@@ -95,6 +95,10 @@ Install the binary in your $GOBIN
 First we make sure we have our dependencies
 
     go get -t
+    
+Make sure goconvey is installed, else use
+
+    go get -t github.com/smartystreets/goconvey
 
 Just go into this directory and either
 
