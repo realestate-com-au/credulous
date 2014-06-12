@@ -16,7 +16,7 @@ func TestEncode(t *testing.T) {
 		panic_the_err(err)
 		plaintext := "some plaintext"
 		ciphertext, _ := CredulousEncode(plaintext, pubkey)
-		So(len(ciphertext), ShouldEqual, 344)
+		So(len(ciphertext), ShouldEqual, 556)
 	})
 }
 
