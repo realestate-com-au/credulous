@@ -15,8 +15,43 @@ func TestEncode(t *testing.T) {
 		pubkey, _, _, _, err := ssh.ParseAuthorizedKey([]byte("ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXg9Vmhy9YSB8BcN3yHgQjdX9lN3j2KRpv7kVDXSiIana2WbKP7IiTS0uJcJWUM3vlHjdL9KOO0jCWWzVFIcmLhiVVG+Fy2tothBp/NhjR8WWG/6Jg/6tXvVkLG6bDgfbDaLWdE5xzjL0YG8TrIluqnu0J5GHKrQcXF650PlqkGo+whpXrS8wOG+eUmsHX9L1w/Z3TkQlMjQNJEoRbqqSrp7yGj4JqzbtLpsglPRlobD7LHp+5ZDxzpk9i+6hoMxp2muDFxnEtZyED6IMQlNNEGkc3sdmGPOo26oW2+ePkBcjpOpdVif/Iya/jDLuLFHAOol6G34Tr4IdTgaL0qCCr TEST KEY"))
 		panic_the_err(err)
 		plaintext := "some plaintext"
-		ciphertext, _ := CredulousEncode(plaintext, pubkey)
-		So(len(ciphertext), ShouldEqual, 344)
+		ciphertext, err := CredulousEncode(plaintext, pubkey)
+		So(err, ShouldEqual, nil)
+		So(len(ciphertext), ShouldEqual, 556)
+	})
+}
+
+func TestEncodeAES(t *testing.T) {
+	Convey("Test encoding with AES", t, func() {
+		plaintext := "some plaintext"
+		key := "12345678901234567890123456789012"
+		ciphertext, err := encodeAES([]byte(key), plaintext)
+		So(err, ShouldEqual, nil)
+		So(len(ciphertext), ShouldEqual, 40)
+	})
+}
+
+func TestDecodeAES(t *testing.T) {
+	Convey("Test encoding with AES", t, func() {
+		ciphertext := "ghRydcBg7LR66v8pF6PvaXZ67gHk8toOtveDE+dP"
+		key := "12345678901234567890123456789012"
+		plaintext, err := decodeAES([]byte(key), ciphertext)
+		So(err, ShouldEqual, nil)
+		So(plaintext, ShouldEqual, "some plaintext")
+	})
+}
+
+func TestDecodeAESCredential(t *testing.T) {
+	Convey("Test decoding an AES-encrypted ciphertext", t, func() {
+		ciphertext := "eyJFbmNvZGVkS2V5IjoicDI5R3NmSmhIVjYvRGd3cmd1d040aDhKTmErTGJkZ0VHcU5vaVB6c1Rnb3IrOEJsQnJTVW1rWGZQTlFvRnY4NHdlcGkvYmd4ZmNyYlpDWm5iMEx4bW9pVjhjMERZYlE5M3F1d0ptK2VBNVhSVlZzTFZodUk1RG9rOENMbkwxOEl5aXc4OENWMXR6ZkJOUWNnQVdBckpsNHBMdzZEbkVFS21NOHRabCtNRUVnTlFjVStybUprKytZbU1ubW44KzVEU1Q5TWtLQ0lxeHl2eVNCRGYxVGkrS2ZHNTlXajkybGQycGZ1Q3k5YWREYlQ2azc0ZG1MbFkvOTlZMWVDZkREMmJWZjNueWJrUkg2UTM3bXNQVHpnbGRaWE56cjBoeStTUERTZHozU0lBSmZGZGw1dy9ka3pYTms2TXcwaHMxbjhRR1BsdnBMOFI1MzF1Rit5a3c5STh3PT0iLCJDaXBoZXJ0ZXh0Ijoiem5Cc2ZxbmJwYTFtdEF6Q09GMVZpU3VsUlRQSGZIblE1UEREZzluYyJ9"
+		tmp, err := ioutil.ReadFile("testkey")
+		panic_the_err(err)
+		key, err := ssh.ParseRawPrivateKey(tmp)
+		privkey := key.(*rsa.PrivateKey)
+		panic_the_err(err)
+		plaintext, err := CredulousDecodeAES(ciphertext, privkey)
+		So(err, ShouldEqual, nil)
+		So(plaintext, ShouldEqual, "some plaintext")
 	})
 }
 

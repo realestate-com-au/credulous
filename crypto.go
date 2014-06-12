@@ -1,14 +1,18 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -63,18 +67,121 @@ func rsaPubkeyToSSHPubkey(rsakey rsa.PublicKey) (sshkey ssh.PublicKey, err error
 	return sshkey, nil
 }
 
-// returns a base64 encoded ciphertext. The salt is generated internally
-func CredulousEncode(plaintext string, pubkey ssh.PublicKey) (cipher string, err error) {
-	rsaKey := sshPubkeyToRsaPubkey(pubkey)
-	out, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &rsaKey, []byte(plaintext), []byte("Credulous"))
+type AESEncryption struct {
+	EncodedKey string
+	Ciphertext string
+}
+
+func encodeAES(key []byte, plaintext string) (ciphertext string, err error) {
+	cipherBlock, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
-	cipher = base64.StdEncoding.EncodeToString(out)
-	return cipher, nil
+
+	// We need an unique IV to go at the front of the ciphertext
+	out := make([]byte, aes.BlockSize+len(plaintext))
+	iv := out[:aes.BlockSize]
+	_, err = io.ReadFull(rand.Reader, iv)
+	if err != nil {
+		return "", err
+	}
+
+	stream := cipher.NewCFBEncrypter(cipherBlock, iv)
+	stream.XORKeyStream(out[aes.BlockSize:], []byte(plaintext))
+	encoded := base64.StdEncoding.EncodeToString(out)
+	return encoded, nil
 }
 
-func CredulousDecode(ciphertext string, privkey *rsa.PrivateKey) (plaintext string, err error) {
+// takes a base64-encoded AES-encrypted ciphertext
+func decodeAES(key []byte, ciphertext string) (string, error) {
+	encrypted, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return "", err
+	}
+
+	decrypter, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	iv := encrypted[:aes.BlockSize]
+	msg := encrypted[aes.BlockSize:]
+	aesDecrypter := cipher.NewCFBDecrypter(decrypter, iv)
+	aesDecrypter.XORKeyStream(msg, msg)
+	return string(msg), nil
+}
+
+// returns a base64 encoded ciphertext.
+// OAEP can only encrypt plaintexts that are smaller than the key length; for
+// a 1024-bit key, about 117 bytes. So instead, this function:
+// * generates a random 32-byte symmetric key (randKey)
+// * encrypts the plaintext with AES256 using that random symmetric key -> cipherText
+// * encrypts the random symmetric key with the ssh PublicKey -> cipherKey
+// * returns the base64-encoded marshalled JSON for the ciphertext and key
+func CredulousEncode(plaintext string, pubkey ssh.PublicKey) (ciphertext string, err error) {
+	rsaKey := sshPubkeyToRsaPubkey(pubkey)
+	randKey := make([]byte, 32)
+	_, err = rand.Read(randKey)
+	if err != nil {
+		return "", err
+	}
+
+	encoded, err := encodeAES(randKey, plaintext)
+	if err != nil {
+		return "", err
+	}
+
+	out, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, &rsaKey, []byte(randKey), []byte("Credulous"))
+	if err != nil {
+		return "", err
+	}
+	cipherKey := base64.StdEncoding.EncodeToString(out)
+
+	cipherStruct := AESEncryption{
+		EncodedKey: cipherKey,
+		Ciphertext: encoded,
+	}
+
+	tmp, err := json.Marshal(cipherStruct)
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext = base64.StdEncoding.EncodeToString(tmp)
+
+	return ciphertext, nil
+}
+
+func CredulousDecodeAES(ciphertext string, privkey *rsa.PrivateKey) (plaintext string, err error) {
+	in, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		return "", err
+	}
+
+	// pull apart the layers of base64-encoded JSON
+	var encrypted AESEncryption
+	err = json.Unmarshal(in, &encrypted)
+	if err != nil {
+		return "", err
+	}
+
+	encryptedKey, err := base64.StdEncoding.DecodeString(encrypted.EncodedKey)
+	if err != nil {
+		return "", err
+	}
+
+	// decrypt the AES key using the ssh private key
+	aesKey, err := rsa.DecryptOAEP(sha1.New(), rand.Reader, privkey, encryptedKey, []byte("Credulous"))
+	if err != nil {
+		return "", err
+	}
+
+	plaintext, err = decodeAES(aesKey, encrypted.Ciphertext)
+
+	return plaintext, nil
+}
+
+func CredulousDecodePureRSA(ciphertext string, privkey *rsa.PrivateKey) (plaintext string, err error) {
 	in, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return "", err

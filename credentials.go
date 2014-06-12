@@ -18,7 +18,7 @@ import (
 	"code.google.com/p/go.crypto/ssh"
 )
 
-const FORMAT_VERSION string = "2014-05-31"
+const FORMAT_VERSION string = "2014-06-12"
 
 // How long to retry after rotating credentials for
 // new credentials to become active (in seconds)
@@ -142,7 +142,15 @@ func parseCredential(data []byte, keyfile string) (*Credentials, error) {
 		return nil, err
 	}
 
-	tmp, err := CredulousDecode(creds.Encryptions[offset].Ciphertext, privKey)
+	var tmp string
+	switch {
+	case creds.Version == "2014-05-31":
+		log.Print("INFO: These credentials are in the old format; re-run 'credulous save' now to remove this warning")
+		tmp, err = CredulousDecodePureRSA(creds.Encryptions[offset].Ciphertext, privKey)
+	case creds.Version == "2014-06-12":
+		tmp, err = CredulousDecodeAES(creds.Encryptions[offset].Ciphertext, privKey)
+	}
+
 	if err != nil {
 		return nil, err
 	}

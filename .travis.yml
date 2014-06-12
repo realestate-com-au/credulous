@@ -7,8 +7,7 @@ install:
   - go install
 script:
   - export PATH=$HOME/gopath/bin:$PATH
-  - go test ./...
-  - ./generate-pkgs
+  - go test ./... && ./generate-pkgs
 env:
   global:
     - secure: "atByW9YBuj/QUIxp0UtIM3hrvHN2mxReTs08VCIbeQCulct8FVU+/MRKTDAsP9gGT1jbKj7EXn77EoWWZBChOUhLK3Nl87UZEN78wDejkG1/vvMDwAcLmRXgAbEoJ0Zqzf/4kspdh3w7jb97TS+5Zf/PSlc7tvl2SUASvnz/jYE="
