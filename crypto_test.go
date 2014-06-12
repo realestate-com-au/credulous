@@ -78,3 +78,16 @@ func TestSSHFingerprint(t *testing.T) {
 		So(fingerprint, ShouldEqual, "c0:61:84:fc:e8:c9:52:dc:cd:a9:8e:82:a2:70:0a:30")
 	})
 }
+
+func TestSSHPrivateFingerprint(t *testing.T) {
+	Convey("Test generating SSH private key fingerprint", t, func() {
+		tmp, err := ioutil.ReadFile("testkey")
+		panic_the_err(err)
+		key, err := ssh.ParseRawPrivateKey(tmp)
+		privkey := key.(*rsa.PrivateKey)
+		panic_the_err(err)
+		fingerprint, err := SSHPrivateFingerprint(*privkey)
+		So(err, ShouldEqual, nil)
+		So(fingerprint, ShouldEqual, "c0:61:84:fc:e8:c9:52:dc:cd:a9:8e:82:a2:70:0a:30")
+	})
+}
