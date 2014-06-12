@@ -154,7 +154,7 @@ func TestReadFile(t *testing.T) {
 			cred, _ := readCredentialFile("credential.json", "testkey")
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
-			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=some plaintext\nexport AWS_SECRET_ACCESS_KEY=some plaintext\n")
+			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=\"some plaintext\"\nexport AWS_SECRET_ACCESS_KEY=\"some plaintext\"\n")
 		})
 
 		Convey("Valid new Json returns Credentials", func() {
@@ -170,7 +170,7 @@ func TestReadFile(t *testing.T) {
 			cred, err := readCredentialFile("newcreds.json", "testkey")
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
-			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=plaintextkeyid\nexport AWS_SECRET_ACCESS_KEY=plaintextsecret\n")
+			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=\"plaintextkeyid\"\nexport AWS_SECRET_ACCESS_KEY=\"plaintextsecret\"\n")
 			So(err, ShouldEqual, nil)
 		})
 	})
