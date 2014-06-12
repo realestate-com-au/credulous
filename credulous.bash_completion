@@ -8,7 +8,7 @@ _credulous()
     #
     #  Commands we'll complete
     #
-    commands="display save source list"
+    commands="display save source list current rotate"
 
     #
     #  Complete the arguments to some (well, one!) of the commands.
