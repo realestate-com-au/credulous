@@ -56,22 +56,30 @@ func getPrivateKey(c *cli.Context) (filename string) {
 	return filename
 }
 
+func splitUserAndAccount(arg string) (string, string, error) {
+	atpos := strings.LastIndex(arg, "@")
+	if atpos < 1 {
+		err := errors.New("Invalid account format; please specify <username>@<account>")
+		return "", "", err
+	}
+	// pull off everything before the last '@'
+	return arg[atpos+1:], arg[0:atpos], nil
+}
+
 func getAccountAndUserName(c *cli.Context) (string, string, error) {
 	if len(c.Args()) > 0 {
-		result := strings.Split(c.Args()[0], "@")
-		if len(result) < 2 {
-			err := errors.New("Invalid account format; please specify <username>@<account>")
+		user, acct, err := splitUserAndAccount(c.Args()[0])
+		if err != nil {
 			return "", "", err
 		}
-		return result[1], result[0], nil
+		return user, acct, nil
 	}
 	if c.String("credentials") != "" {
-		result := strings.Split(c.String("credentials"), "@")
-		if len(result) < 2 {
-			err := errors.New("Invalid account format; please specify <username>@<account>")
+		user, acct, err := splitUserAndAccount(c.String("credentials"))
+		if err != nil {
 			return "", "", err
 		}
-		return result[1], result[0], nil
+		return user, acct, nil
 	} else {
 		return c.String("account"), c.String("username"), nil
 	}
