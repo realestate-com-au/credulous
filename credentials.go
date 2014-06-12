@@ -228,7 +228,13 @@ func (creds Credentials) verifyUserAndAccount() error {
 	}
 
 	// Make sure the user is who we expect
-	err = verify_user(creds.IamUsername, instance)
+	// If the username is the same as the account name, then it's the root user
+	// and there's actually no username at all (oddly)
+	if creds.IamUsername == creds.AccountAliasOrId {
+		err = verify_user("", instance)
+	} else {
+		err = verify_user(creds.IamUsername, instance)
+	}
 	if err != nil {
 		return err
 	}
