@@ -7,7 +7,7 @@ DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ pr
 SRCS=$(shell ls -1 *.go | grep -v _test.go ) bash/credulous.bash_completion \
 	doc/credulous.md bash/credulous.sh
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
-	testkey testkey.pub credential.json newcreds.json
+	testdata/testkey testdata/testkey.pub testdata/credential.json testdata/newcreds.json
 
 DOC=doc/credulous.md
 MAN=doc/credulous.1
