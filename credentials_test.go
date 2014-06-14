@@ -146,19 +146,19 @@ func TestValidateCredentials(t *testing.T) {
 func TestReadFile(t *testing.T) {
 	Convey("Test Read File", t, func() {
 		Convey("Valid old Json returns Credential", func() {
-			cred, _ := readCredentialFile("credential.json", "testkey")
+			cred, _ := readCredentialFile("testdata/credential.json", "testdata/testkey")
 			So(cred.LifeTime, ShouldEqual, 22)
 			So(cred.Encryptions[0].decoded.KeyId, ShouldEqual, "some plaintext")
 		})
 		Convey("Old credentials display correctly", func() {
-			cred, _ := readCredentialFile("credential.json", "testkey")
+			cred, _ := readCredentialFile("testdata/credential.json", "testdata/testkey")
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
 			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=\"some plaintext\"\nexport AWS_SECRET_ACCESS_KEY=\"some plaintext\"\n")
 		})
 
 		Convey("Valid new Json returns Credentials", func() {
-			cred, err := readCredentialFile("newcreds.json", "testkey")
+			cred, err := readCredentialFile("testdata/newcreds.json", "testdata/testkey")
 			So(err, ShouldEqual, nil)
 			So(cred.LifeTime, ShouldEqual, 0)
 			So(cred.CreateTime, ShouldEqual, "1401515273")
@@ -167,7 +167,7 @@ func TestReadFile(t *testing.T) {
 			So(cred.Encryptions[0].decoded.SecretKey, ShouldEqual, "plaintextsecret")
 		})
 		Convey("New credentials display correctly", func() {
-			cred, err := readCredentialFile("newcreds.json", "testkey")
+			cred, err := readCredentialFile("testdata/newcreds.json", "testdata/testkey")
 			testWriter := TestWriter{}
 			cred.Display(&testWriter)
 			So(string(testWriter.Written), ShouldEqual, "export AWS_ACCESS_KEY_ID=\"plaintextkeyid\"\nexport AWS_SECRET_ACCESS_KEY=\"plaintextsecret\"\n")

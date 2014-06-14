@@ -26,7 +26,7 @@ export GOPATH=$RPM_BUILD_DIR
 go get -t
 go test
 go build
-pandoc -s -w man credulous.md -o credulous.1
+pandoc -s -w man doc/credulous.md -o credulous.1
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -36,8 +36,8 @@ mkdir -p $RPM_BUILD_ROOT/%{_bindir} \
 	$RPM_BUILD_ROOT/%{_mandir}/man1
 
 cp credulous $RPM_BUILD_ROOT/%{_bindir}
-cp credulous.bash_completion $RPM_BUILD_ROOT/%{_sysconfdir}/bash_completion.d/credulous.bash_completion
-cp credulous.sh $RPM_BUILD_ROOT/%{_sysconfdir}/profile.d/credulous.sh
+cp bash/credulous.bash_completion $RPM_BUILD_ROOT/%{_sysconfdir}/bash_completion.d/credulous.bash_completion
+cp bash/credulous.sh $RPM_BUILD_ROOT/%{_sysconfdir}/profile.d/credulous.sh
 chmod 0755 $RPM_BUILD_ROOT/%{_bindir}/credulous
 cp credulous.1 $RPM_BUILD_ROOT/%{_mandir}/man1/credulous.1
 
