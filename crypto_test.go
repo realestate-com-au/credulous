@@ -44,7 +44,7 @@ func TestDecodeAES(t *testing.T) {
 func TestDecodeAESCredential(t *testing.T) {
 	Convey("Test decoding an AES-encrypted ciphertext", t, func() {
 		ciphertext := "eyJFbmNvZGVkS2V5IjoicDI5R3NmSmhIVjYvRGd3cmd1d040aDhKTmErTGJkZ0VHcU5vaVB6c1Rnb3IrOEJsQnJTVW1rWGZQTlFvRnY4NHdlcGkvYmd4ZmNyYlpDWm5iMEx4bW9pVjhjMERZYlE5M3F1d0ptK2VBNVhSVlZzTFZodUk1RG9rOENMbkwxOEl5aXc4OENWMXR6ZkJOUWNnQVdBckpsNHBMdzZEbkVFS21NOHRabCtNRUVnTlFjVStybUprKytZbU1ubW44KzVEU1Q5TWtLQ0lxeHl2eVNCRGYxVGkrS2ZHNTlXajkybGQycGZ1Q3k5YWREYlQ2azc0ZG1MbFkvOTlZMWVDZkREMmJWZjNueWJrUkg2UTM3bXNQVHpnbGRaWE56cjBoeStTUERTZHozU0lBSmZGZGw1dy9ka3pYTms2TXcwaHMxbjhRR1BsdnBMOFI1MzF1Rit5a3c5STh3PT0iLCJDaXBoZXJ0ZXh0Ijoiem5Cc2ZxbmJwYTFtdEF6Q09GMVZpU3VsUlRQSGZIblE1UEREZzluYyJ9"
-		tmp, err := ioutil.ReadFile("testkey")
+		tmp, err := ioutil.ReadFile("testdata/testkey")
 		panic_the_err(err)
 		key, err := ssh.ParseRawPrivateKey(tmp)
 		privkey := key.(*rsa.PrivateKey)
@@ -58,7 +58,7 @@ func TestDecodeAESCredential(t *testing.T) {
 func TestDecodeWithSalt(t *testing.T) {
 	Convey("Test Decode a string", t, func() {
 		ciphertext := "sGhPCj9OCe0hv9PvWQvsu289sMsVNfqpyQDRCgXo+PwDMlXmRVXa5ErkkHNwyuYWFr9u1gkytiue7Dol4duvPycUYqpdeOOrfAMWkLWKGrO6tgTYtxMjVYBtp3negl2OeJqHFs6h/UwmNaO6IP2z2R8vPctmMmpwrkdzokiiPx6WKLDP17eoC+Q+zvDUqSTgqnSiwbjb+gFGFt7NTH65gHHHtwbm2wr45Oce4+LfddGo8V7A52ZjVlTHHdK+OiJzHmN8KMTAUi1d0ULI7oW+BfAX7iyA1SyvFx0oJHJ/dDidxPUm7i2vEeKtXU5BS8THv5dk01BwByJU+kl3qenCTA=="
-		tmp, err := ioutil.ReadFile("testkey")
+		tmp, err := ioutil.ReadFile("testdata/testkey")
 		panic_the_err(err)
 		key, err := ssh.ParseRawPrivateKey(tmp)
 		privkey := key.(*rsa.PrivateKey)
@@ -81,7 +81,7 @@ func TestSSHFingerprint(t *testing.T) {
 
 func TestSSHPrivateFingerprint(t *testing.T) {
 	Convey("Test generating SSH private key fingerprint", t, func() {
-		tmp, err := ioutil.ReadFile("testkey")
+		tmp, err := ioutil.ReadFile("testdata/testkey")
 		panic_the_err(err)
 		key, err := ssh.ParseRawPrivateKey(tmp)
 		privkey := key.(*rsa.PrivateKey)
