@@ -137,12 +137,43 @@ func parseEnvironmentArgs(c *cli.Context) (map[string]string, error) {
 	return envMap, nil
 }
 
-func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkey ssh.PublicKey, err error) {
-	var pubkeyFile string
-	if c.String("key") == "" {
-		pubkeyFile = filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub")
-	} else {
-		pubkeyFile = c.String("key")
+func readSSHPubkeyFile(filename string) (pubkey ssh.PublicKey, err error) {
+	pubkeyString, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	pubkey, _, _, _, err = ssh.ParseAuthorizedKey([]byte(pubkeyString))
+	if err != nil {
+		return nil, err
+	}
+	return pubkey, nil
+}
+
+func parseKeyArgs(c *cli.Context) (pubkeys []ssh.PublicKey, err error) {
+	// no args, so just use the default
+	if c.StringSlice("key") == nil {
+		pubkey, err := readSSHPubkeyFile(filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub"))
+		if err != nil {
+			return nil, err
+		}
+		pubkeys = append(pubkeys, pubkey)
+		return pubkeys, nil
+	}
+
+	for _, arg := range c.StringSlice("key") {
+		pubkey, err := readSSHPubkeyFile(arg)
+		if err != nil {
+			return nil, err
+		}
+		pubkeys = append(pubkeys, pubkey)
+	}
+	return pubkeys, nil
+}
+
+func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkeys []ssh.PublicKey, err error) {
+	pubkeys, err = parseKeyArgs(c)
+	if err != nil {
+		return Credential{}, "", "", nil, err
 	}
 
 	username, account, err = parseUserAndAccount(c)
@@ -163,21 +194,13 @@ func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, p
 			return Credential{}, "", "", nil, err
 		}
 	}
-	pubkeyString, err := ioutil.ReadFile(pubkeyFile)
-	if err != nil {
-		return Credential{}, "", "", nil, err
-	}
-	pubkey, _, _, _, err = ssh.ParseAuthorizedKey([]byte(pubkeyString))
-	if err != nil {
-		return Credential{}, "", "", nil, err
-	}
 	cred = Credential{
 		KeyId:     AWSAccessKeyId,
 		SecretKey: AWSSecretAccessKey,
 		EnvVars:   envmap,
 	}
 
-	return cred, username, account, pubkey, nil
+	return cred, username, account, pubkeys, nil
 }
 
 func main() {
@@ -191,7 +214,7 @@ func main() {
 			Name:  "save",
 			Usage: "Save AWS credentials",
 			Flags: []cli.Flag{
-				cli.StringFlag{"key, k", "", "SSH public key"},
+				cli.StringSliceFlag{"key, k", &cli.StringSlice{}, "SSH public keys"},
 				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "Environment variables to set in the form VAR=value"},
 				cli.BoolFlag{"force, f", "Force saving without validating username or account.\n" +
 					"\tYou MUST specify -u username -a account"},
@@ -199,9 +222,9 @@ func main() {
 				cli.StringFlag{"account, a", "", "Account alias (for use with '--force')"},
 			},
 			Action: func(c *cli.Context) {
-				cred, username, account, pubkey, err := parseSaveArgs(c)
+				cred, username, account, pubkeys, err := parseSaveArgs(c)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkey, c.Bool("force"))
+				err = SaveCredentials(cred, username, account, pubkeys, c.Bool("force"))
 				panic_the_err(err)
 			},
 		},
