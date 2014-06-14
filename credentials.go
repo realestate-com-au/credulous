@@ -348,7 +348,7 @@ func (cred *Credential) rotateCredentials(username string) (err error) {
 	return nil
 }
 
-func SaveCredentials(cred Credential, username, alias string, pubkey ssh.PublicKey, force bool) (err error) {
+func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, force bool) (err error) {
 
 	var key_create_date int64
 
@@ -383,16 +383,19 @@ func SaveCredentials(cred Credential, username, alias string, pubkey ssh.PublicK
 	if err != nil {
 		return err
 	}
-	encoded, err := CredulousEncode(string(plaintext), pubkey)
-	if err != nil {
-		return err
-	}
 
 	enc_slice := []Encryption{}
-	enc_slice = append(enc_slice, Encryption{
-		Ciphertext:  encoded,
-		Fingerprint: SSHFingerprint(pubkey),
-	})
+	for _, pubkey := range pubkeys {
+		encoded, err := CredulousEncode(string(plaintext), pubkey)
+		if err != nil {
+			return err
+		}
+
+		enc_slice = append(enc_slice, Encryption{
+			Ciphertext:  encoded,
+			Fingerprint: SSHFingerprint(pubkey),
+		})
+	}
 	creds := Credentials{
 		Version:          FORMAT_VERSION,
 		AccountAliasOrId: alias,
