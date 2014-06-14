@@ -4,13 +4,13 @@ MOCK_CONFIG=epel-6-x86_64
 SHELL=/bin/bash
 DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ print $$3 }' | cut -f2 -d\' )
 
-SRCS=$(shell ls -1 *.go | grep -v _test.go ) credulous.bash_completion \
-	credulous.md credulous.sh
+SRCS=$(shell ls -1 *.go | grep -v _test.go ) bash/credulous.bash_completion \
+	doc/credulous.md bash/credulous.sh
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
-	testkey testkey.pub credential.json newcreds.json
+	testdata/testkey testdata/testkey.pub testdata/credential.json testdata/newcreds.json
 
-DOC=credulous.md
-MAN=credulous.1
+DOC=doc/credulous.md
+MAN=doc/credulous.1
 SPEC=rpm/credulous.spec
 SPEC_TMPL=rpm/credulous.spec.tmpl
 NAME=$(shell grep '^Name:' $(SPEC_TMPL) | awk '{ print $$2 }' )
@@ -30,7 +30,7 @@ MOCK_SRPM=$(NVR).src.rpm
 RPM=$(NVR).x86_64.rpm
 TGZ=$(NAME)-$(VERSION).tar.gz
 
-INSTALLABLES=credulous credulous.bash_completion credulous.1 credulous.sh
+INSTALLABLES=credulous bash/credulous.bash_completion doc/credulous.1 bash/credulous.sh
 
 .DEFAULT: all
 .PHONY: debianpkg
@@ -64,22 +64,22 @@ rpmbuild: sources
 # Create the source tarball with N-V prefix to match what the specfile expects
 sources:
 	@echo "Building for version '$(VERSION)'"
-	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
+	sed -i -e 's/==VERSION==/$(VERSION)/' $(DOC)
 	tar czvf $(TGZ) --transform='s|^|src/github.com/realestate-com-au/credulous/|' $(SRCS) $(TESTS)
 
 debianpkg:
 	@echo Build Debian packages
 	sed -i -e 's/==VERSION==/$(VERSION)/' debian-pkg/DEBIAN/control
-	sed -i -e 's/==VERSION==/$(VERSION)/' credulous.md
+	sed -i -e 's/==VERSION==/$(VERSION)/' $(DOC)
 	mkdir -p debian-pkg/usr/bin \
 		debian-pkg/usr/share/man/man1 \
 		debian-pkg/etc/bash_completion.d \
 		debian-pkg/etc/profile.d
 	cp $(HOME)/gopath/bin/credulous debian-pkg/usr/bin
-	cp credulous.sh debian-pkg/etc/profile.d
-	cp credulous.bash_completion debian-pkg/etc/bash_completion.d
+	cp bash/credulous.sh debian-pkg/etc/profile.d
+	cp bash/credulous.bash_completion debian-pkg/etc/bash_completion.d
 	chmod 0755 debian-pkg/usr/bin/credulous
-	pandoc -s -w man credulous.md -o debian-pkg/usr/share/man/man1/credulous.1
+	pandoc -s -w man $(DOC) -o debian-pkg/usr/share/man/man1/credulous.1
 	dpkg-deb --build debian-pkg
 	mv debian-pkg.deb $(NAME)_$(VERSION)_amd64.deb
 

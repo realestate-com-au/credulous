@@ -3,14 +3,14 @@
 env | egrep -v "AWS_|TOKEN"
 
 case "x$TRAVIS_OS_NAME" in
-    xlinux) ./generate-linux-pkgs; exit $? ;;
-    xosx)   ./generate-osx-pkgs; exit $? ;;
+    xlinux) scripts/generate-linux-pkgs; exit $? ;;
+    xosx)   scripts/generate-osx-pkgs; exit $? ;;
     *)      echo "TRAVIS_OS_NAME not set" ;;
 esac
 
 case "x$_system_type" in
-    x[Ll]inux) ./generate-linux-pkgs; exit $? ;;
-    x[Oo][Ss][Xx]) ./generate-osx-pkgs; exit $? ;;
+    x[Ll]inux) scripts/generate-linux-pkgs; exit $? ;;
+    x[Oo][Ss][Xx]) scripts/generate-osx-pkgs; exit $? ;;
     *)  echo "_system_type not set" ;;
 esac
 
