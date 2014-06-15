@@ -348,7 +348,7 @@ func (cred *Credential) rotateCredentials(username string) (err error) {
 	return nil
 }
 
-func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, force bool) (err error) {
+func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, lifetime int, force bool) (err error) {
 
 	var key_create_date int64
 
@@ -402,6 +402,7 @@ func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.Publ
 		IamUsername:      username,
 		CreateTime:       fmt.Sprintf("%d", key_create_date),
 		Encryptions:      enc_slice,
+		LifeTime:         lifetime,
 	}
 
 	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))

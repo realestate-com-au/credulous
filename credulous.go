@@ -170,20 +170,37 @@ func parseKeyArgs(c *cli.Context) (pubkeys []ssh.PublicKey, err error) {
 	return pubkeys, nil
 }
 
-func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkeys []ssh.PublicKey, err error) {
+// parseLifetimeArgs attempts to be a little clever in determining what credential
+// lifetime you've chosen. It returns a number of hours and an error. It assumes that
+// the argument was passed in as hours.
+func parseLifetimeArgs(c *cli.Context) (lifetime int, err error) {
+	// the default is zero, which is our default
+	if c.Int("lifetime") < 0 {
+		return 0, nil
+	}
+
+	return c.Int("lifetime"), nil
+}
+
+func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkeys []ssh.PublicKey, lifetime int, err error) {
 	pubkeys, err = parseKeyArgs(c)
 	if err != nil {
-		return Credential{}, "", "", nil, err
+		return Credential{}, "", "", nil, 0, err
 	}
 
 	username, account, err = parseUserAndAccount(c)
 	if err != nil {
-		return Credential{}, "", "", nil, err
+		return Credential{}, "", "", nil, 0, err
 	}
 
 	envmap, err := parseEnvironmentArgs(c)
 	if err != nil {
-		return Credential{}, "", "", nil, err
+		return Credential{}, "", "", nil, 0, err
+	}
+
+	lifetime, err = parseLifetimeArgs(c)
+	if err != nil {
+		return Credential{}, "", "", nil, 0, err
 	}
 
 	AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
@@ -191,7 +208,7 @@ func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, p
 	if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
 		err := errors.New("Can't save, no credentials in the environment")
 		if err != nil {
-			return Credential{}, "", "", nil, err
+			return Credential{}, "", "", nil, 0, err
 		}
 	}
 	cred = Credential{
@@ -200,7 +217,7 @@ func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, p
 		EnvVars:   envmap,
 	}
 
-	return cred, username, account, pubkeys, nil
+	return cred, username, account, pubkeys, lifetime, nil
 }
 
 func main() {
@@ -214,17 +231,41 @@ func main() {
 			Name:  "save",
 			Usage: "Save AWS credentials",
 			Flags: []cli.Flag{
-				cli.StringSliceFlag{"key, k", &cli.StringSlice{}, "SSH public keys"},
-				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "Environment variables to set in the form VAR=value"},
-				cli.BoolFlag{"force, f", "Force saving without validating username or account.\n" +
-					"\tYou MUST specify -u username -a account"},
-				cli.StringFlag{"username, u", "", "Username (for use with '--force')"},
-				cli.StringFlag{"account, a", "", "Account alias (for use with '--force')"},
+				cli.StringSliceFlag{
+					"key, k",
+					&cli.StringSlice{},
+					"\n        SSH public keys",
+				},
+				cli.StringSliceFlag{
+					"env, e",
+					&cli.StringSlice{},
+					"\n        Environment variables to set in the form VAR=value",
+				},
+				cli.IntFlag{
+					"lifetime, l",
+					0,
+					"\n        Credential lifetime in hours",
+				},
+				cli.BoolFlag{
+					"force, f",
+					"\n        Force saving without validating username or account." +
+						"\n        You MUST specify -u username -a account",
+				},
+				cli.StringFlag{
+					"username, u",
+					"",
+					"\n        Username (for use with '--force')",
+				},
+				cli.StringFlag{
+					"account, a",
+					"",
+					"\n        Account alias (for use with '--force')",
+				},
 			},
 			Action: func(c *cli.Context) {
-				cred, username, account, pubkeys, err := parseSaveArgs(c)
+				cred, username, account, pubkeys, lifetime, err := parseSaveArgs(c)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkeys, c.Bool("force"))
+				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"))
 				panic_the_err(err)
 			},
 		},
@@ -233,11 +274,11 @@ func main() {
 			Name:  "source",
 			Usage: "Source AWS credentials",
 			Flags: []cli.Flag{
-				cli.StringFlag{"account, a", "", "AWS Account alias or id"},
-				cli.StringFlag{"key, k", "", "SSH private key"},
-				cli.StringFlag{"username, u", "", "IAM User"},
-				cli.StringFlag{"credentials, c", "", "Credentials, for example username@account"},
-				cli.BoolFlag{"force, f", "Force sourcing of credentials without validating username or account"},
+				cli.StringFlag{"account, a", "", "\n        AWS Account alias or id"},
+				cli.StringFlag{"key, k", "", "\n        SSH private key"},
+				cli.StringFlag{"username, u", "", "\n        IAM User"},
+				cli.StringFlag{"credentials, c", "", "\n        Credentials, for example username@account"},
+				cli.BoolFlag{"force, f", "\n        Force sourcing of credentials without validating username or account"},
 			},
 			Action: func(c *cli.Context) {
 				keyfile := getPrivateKey(c)
@@ -315,11 +356,12 @@ func main() {
 			Name:  "rotate",
 			Usage: "Rotate current AWS credentials, deleting the oldest",
 			Flags: []cli.Flag{
-				cli.StringFlag{"key, k", "", "SSH private key"},
-				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "Environment variables to set in the form VAR=value"},
+				cli.IntFlag{"lifetime, l", 0, "\n        New credential lifetime in hours"},
+				cli.StringFlag{"key, k", "", "\n        SSH private key"},
+				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "\n        Environment variables to set in the form VAR=value"},
 			},
 			Action: func(c *cli.Context) {
-				cred, _, _, pubkey, err := parseSaveArgs(c)
+				cred, _, _, pubkey, lifetime, err := parseSaveArgs(c)
 				panic_the_err(err)
 				username, account, err := getAWSUsernameAndAlias(cred)
 				panic_the_err(err)
@@ -327,7 +369,7 @@ func main() {
 				panic_the_err(err)
 				username, account, err = getAWSUsernameAndAlias(cred)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkey, c.Bool("force"))
+				err = SaveCredentials(cred, username, account, pubkey, lifetime, c.Bool("force"))
 				panic_the_err(err)
 			},
 		},
