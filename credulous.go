@@ -232,34 +232,34 @@ func main() {
 			Usage: "Save AWS credentials",
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
-					"key, k",
-					&cli.StringSlice{},
-					"\n        SSH public keys",
+					Name:  "key, k",
+					Value: &cli.StringSlice{},
+					Usage: "\n        SSH public keys",
 				},
 				cli.StringSliceFlag{
-					"env, e",
-					&cli.StringSlice{},
-					"\n        Environment variables to set in the form VAR=value",
+					Name:  "env, e",
+					Value: &cli.StringSlice{},
+					Usage: "\n        Environment variables to set in the form VAR=value",
 				},
 				cli.IntFlag{
-					"lifetime, l",
-					0,
-					"\n        Credential lifetime in hours",
+					Name:  "lifetime, l",
+					Value: 0,
+					Usage: "\n        Credential lifetime in seconds (0 means forever)",
 				},
 				cli.BoolFlag{
-					"force, f",
-					"\n        Force saving without validating username or account." +
+					Name: "force, f",
+					Usage: "\n        Force saving without validating username or account." +
 						"\n        You MUST specify -u username -a account",
 				},
 				cli.StringFlag{
-					"username, u",
-					"",
-					"\n        Username (for use with '--force')",
+					Name:  "username, u",
+					Value: "",
+					Usage: "\n        Username (for use with '--force')",
 				},
 				cli.StringFlag{
-					"account, a",
-					"",
-					"\n        Account alias (for use with '--force')",
+					Name:  "account, a",
+					Value: "",
+					Usage: "\n        Account alias (for use with '--force')",
 				},
 			},
 			Action: func(c *cli.Context) {
@@ -274,11 +274,30 @@ func main() {
 			Name:  "source",
 			Usage: "Source AWS credentials",
 			Flags: []cli.Flag{
-				cli.StringFlag{"account, a", "", "\n        AWS Account alias or id"},
-				cli.StringFlag{"key, k", "", "\n        SSH private key"},
-				cli.StringFlag{"username, u", "", "\n        IAM User"},
-				cli.StringFlag{"credentials, c", "", "\n        Credentials, for example username@account"},
-				cli.BoolFlag{"force, f", "\n        Force sourcing of credentials without validating username or account"},
+				cli.StringFlag{
+					Name:  "account, a",
+					Value: "",
+					Usage: "\n        AWS Account alias or id",
+				},
+				cli.StringFlag{
+					Name:  "key, k",
+					Value: "",
+					Usage: "\n        SSH private key",
+				},
+				cli.StringFlag{
+					Name:  "username, u",
+					Value: "",
+					Usage: "\n        IAM User",
+				},
+				cli.StringFlag{
+					Name:  "credentials, c",
+					Value: "",
+					Usage: "\n        Credentials, for example username@account",
+				},
+				cli.BoolFlag{
+					Name:  "force, f",
+					Usage: "\n        Force sourcing of credentials without validating username or account",
+				},
 			},
 			Action: func(c *cli.Context) {
 				keyfile := getPrivateKey(c)
@@ -356,9 +375,21 @@ func main() {
 			Name:  "rotate",
 			Usage: "Rotate current AWS credentials, deleting the oldest",
 			Flags: []cli.Flag{
-				cli.IntFlag{"lifetime, l", 0, "\n        New credential lifetime in hours"},
-				cli.StringFlag{"key, k", "", "\n        SSH private key"},
-				cli.StringSliceFlag{"env, e", &cli.StringSlice{}, "\n        Environment variables to set in the form VAR=value"},
+				cli.IntFlag{
+					Name:  "lifetime, l",
+					Value: 0,
+					Usage: "\n        New credential lifetime in seconds (0 means forever)",
+				},
+				cli.StringFlag{
+					Name:  "key, k",
+					Value: "",
+					Usage: "\n        SSH private key",
+				},
+				cli.StringSliceFlag{
+					Name:  "env, e",
+					Value: &cli.StringSlice{},
+					Usage: "\n        Environment variables to set in the form VAR=value",
+				},
 			},
 			Action: func(c *cli.Context) {
 				cred, _, _, pubkey, lifetime, err := parseSaveArgs(c)
