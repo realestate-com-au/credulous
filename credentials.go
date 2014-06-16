@@ -83,6 +83,10 @@ func decodeOldCredential(data []byte, keyfile string) (*OldCredential, error) {
 	}
 	credential.SecretKey = decoded
 
+	if credential.CreateTime == "" {
+		credential.CreateTime = "0"
+	}
+
 	return &credential, nil
 }
 
