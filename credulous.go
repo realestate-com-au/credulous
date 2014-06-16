@@ -117,7 +117,7 @@ func parseUserAndAccount(c *cli.Context) (username string, account string, err e
 }
 
 func parseEnvironmentArgs(c *cli.Context) (map[string]string, error) {
-	if c.StringSlice("env") == nil {
+	if len(c.StringSlice("env")) == 0 {
 		return nil, nil
 	}
 
@@ -151,7 +151,7 @@ func readSSHPubkeyFile(filename string) (pubkey ssh.PublicKey, err error) {
 
 func parseKeyArgs(c *cli.Context) (pubkeys []ssh.PublicKey, err error) {
 	// no args, so just use the default
-	if c.StringSlice("key") == nil {
+	if len(c.StringSlice("key")) == 0 {
 		pubkey, err := readSSHPubkeyFile(filepath.Join(os.Getenv("HOME"), "/.ssh/id_rsa.pub"))
 		if err != nil {
 			return nil, err
