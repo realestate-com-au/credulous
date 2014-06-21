@@ -316,7 +316,7 @@ func main() {
 						panic_the_err(err)
 					}
 				}
-				cred.Display(os.Stdout)
+				creds.Display(os.Stdout)
 			},
 		},
 
