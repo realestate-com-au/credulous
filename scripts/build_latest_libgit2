@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# Oh, further horror: git2go, while most excellent, tracks HEAD of the 
+# development branch of libgit2. This means that pretty much every
+# libgit2 packaged installation is too old.
+#
+
+set -ex
+
+if [ -f /etc/redhat_release ]; then
+    yum install -y cmake
+elif [ -f /etc/debian_version ]; then
+    apt-get install -y cmake
+else
+    echo "I can't build on this OS"
+    exit 1
+fi
+
+LIBGIT2_VERSION="0.21.0"
+TARBALL="v${LIBGIT2_VERSION}.tar.gz"
+SOURCE="https://github.com/libgit2/libgit2/archive/${TARBALL}"
+
+BUILDDIR=$( mktemp -d )
+INSTALLDIR=$( mktemp -d )
+cd $BUILDDIR
+wget "$SOURCE"
+tar xvf $TARBALL
+
+cd libgit2-${LIBGIT2_VERSION}
+mkdir build && cd build
+cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
+cmake --build .
+cmake --build . --target install

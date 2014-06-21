@@ -2,6 +2,7 @@ language: go
 go:
   - 1.2
 install:
+  - scripts/build_latest_libgit2
   - go get -v -t ./...
   - mkdir -p $HOME/gopath/bin
   - go install
