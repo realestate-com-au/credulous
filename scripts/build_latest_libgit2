@@ -10,7 +10,7 @@ set -ex
 if [ -f /etc/redhat-release ]; then
     sudo yum install -y cmake openssl http-parser zlib
 elif [ -f /etc/debian_version ]; then
-    sudo apt-get install -y cmake openssl zlib
+    sudo apt-get install -y cmake openssl zlib1g
 else
     echo "I can't build on this OS (yet) -- how about a pull request?"
     exit 1
