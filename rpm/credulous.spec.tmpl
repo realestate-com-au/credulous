@@ -12,7 +12,7 @@ URL:		https://github.com/realestate-com-au/credulous
 Source0:	credulous-%{version}.tar.gz
 
 BuildRequires:	golang, mercurial, bzr, git, pandoc
-Requires:	bash-completion
+Requires:	bash-completion, zlib, openssl, http-parser
 
 %description
 Credulous securely saves and retrieves AWS credentials, storing
@@ -22,6 +22,8 @@ them in an encrypted local repository.
 %setup -n src/github.com/realestate-com-au/credulous
 
 %build
+scripts/build_latest_libgit2
+export PKG_CONFIG_PATH=/tmp/libgit2-0.21.0/lib/pkgconfig
 export GOPATH=$RPM_BUILD_DIR
 go get -t
 go test
