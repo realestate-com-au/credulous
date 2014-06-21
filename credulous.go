@@ -234,7 +234,7 @@ func main() {
 				cli.StringSliceFlag{
 					Name:  "key, k",
 					Value: &cli.StringSlice{},
-					Usage: "\n        SSH public keys",
+					Usage: "\n        SSH public keys for encryption",
 				},
 				cli.StringSliceFlag{
 					Name:  "env, e",
@@ -305,13 +305,13 @@ func main() {
 				if err != nil {
 					panic_the_err(err)
 				}
-				cred, err := RetrieveCredentials(account, username, keyfile)
+				creds, err := RetrieveCredentials(account, username, keyfile)
 				if err != nil {
 					panic_the_err(err)
 				}
 
 				if !c.Bool("force") {
-					err = cred.ValidateCredentials(account, username)
+					err = creds.ValidateCredentials(account, username)
 					if err != nil {
 						panic_the_err(err)
 					}
@@ -380,10 +380,10 @@ func main() {
 					Value: 0,
 					Usage: "\n        New credential lifetime in seconds (0 means forever)",
 				},
-				cli.StringFlag{
+				cli.StringSliceFlag{
 					Name:  "key, k",
-					Value: "",
-					Usage: "\n        SSH private key",
+					Value: &cli.StringSlice{},
+					Usage: "\n        SSH public keys for encryption",
 				},
 				cli.StringSliceFlag{
 					Name:  "env, e",
@@ -392,15 +392,13 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) {
-				cred, _, _, pubkey, lifetime, err := parseSaveArgs(c)
+				cred, _, _, pubkeys, lifetime, err := parseSaveArgs(c)
 				panic_the_err(err)
 				username, account, err := getAWSUsernameAndAlias(cred)
 				panic_the_err(err)
 				err = (&cred).rotateCredentials(username)
 				panic_the_err(err)
-				username, account, err = getAWSUsernameAndAlias(cred)
-				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkey, lifetime, c.Bool("force"))
+				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"))
 				panic_the_err(err)
 			},
 		},
