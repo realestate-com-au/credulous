@@ -7,10 +7,10 @@
 
 set -ex
 
-if [ -f /etc/redhat_release ]; then
-    yum install -y cmake
+if [ -f /etc/redhat-release ]; then
+    sudo yum install -y cmake
 elif [ -f /etc/debian_version ]; then
-    apt-get install -y cmake
+    sudo apt-get install -y cmake
 else
     echo "I can't build on this OS"
     exit 1
@@ -20,9 +20,8 @@ LIBGIT2_VERSION="0.21.0"
 TARBALL="v${LIBGIT2_VERSION}.tar.gz"
 SOURCE="https://github.com/libgit2/libgit2/archive/${TARBALL}"
 
-BUILDDIR=$( mktemp -d )
-INSTALLDIR=$( mktemp -d )
-cd $BUILDDIR
+INSTALLDIR=/tmp/libgit2-${LIBGIT2_VERSION}
+cd /tmp
 wget "$SOURCE"
 tar xvf $TARBALL
 
@@ -31,3 +30,5 @@ mkdir build && cd build
 cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
 cmake --build .
 cmake --build . --target install
+
+cp $TRAVIS_BUILD_DIR/scripts/libgit2.pc $INSTALLDIR/lib/pkgconfig
