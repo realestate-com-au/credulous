@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Oh, further horror: git2go, while most excellent, tracks HEAD of the 
+# development branch of libgit2. This means that pretty much every
+# libgit2 packaged installation is too old.
+#
+
+set -ex
+
+[ -z "$TRAVIS_BUILD_DIR" ] && TRAVIS_BUILD_DIR=$(pwd)
+
+if [ -f /etc/redhat-release ]; then
+    sudo yum install -y cmake openssl http-parser zlib
+    SUFFIX="rhel"
+elif [ -f /etc/debian_version ]; then
+    echo "precedence ::ffff:0:0/96  100" | sudo tee /etc/gai.conf
+    # sudo apt-get install -y cmake openssl zlib1g
+    SUFFIX="ubuntu"
+else
+    echo "I can't build on this OS (yet) -- how about a pull request?"
+    exit 1
+fi
+
+LIBGIT2_VERSION="0.21.0"
+TARBALL="v${LIBGIT2_VERSION}.tar.gz"
+SOURCE="https://github.com/libgit2/libgit2/archive/${TARBALL}"
+
+INSTALLDIR=/tmp/libgit2-${LIBGIT2_VERSION}
+cd /tmp
+wget "$SOURCE"
+tar xvf $TARBALL
+
+cd libgit2-${LIBGIT2_VERSION}
+rm -rf build && mkdir build && cd build
+cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
+cmake --build .
+cmake --build . --target install
+
+cp $TRAVIS_BUILD_DIR/scripts/libgit2.pc-$SUFFIX \
+    $INSTALLDIR/lib/pkgconfig/libgit2.pc

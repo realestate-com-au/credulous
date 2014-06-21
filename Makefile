@@ -5,7 +5,7 @@ SHELL=/bin/bash
 DIST=$(shell grep "config_opts.*dist.*" /etc/mock/$(MOCK_CONFIG).cfg | awk '{ print $$3 }' | cut -f2 -d\' )
 
 SRCS=$(shell ls -1 *.go | grep -v _test.go ) bash/credulous.bash_completion \
-	doc/credulous.md bash/credulous.sh
+	doc/credulous.md bash/credulous.sh scripts/libgit2.pc-rhel
 TESTS=credulous_test.go credentials_test.go crypto_test.go git_test.go \
 	testdata/testkey testdata/testkey.pub testdata/credential.json testdata/newcreds.json
 

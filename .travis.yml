@@ -2,6 +2,7 @@ language: go
 go:
   - 1.2
 install:
+  - scripts/build_latest_libgit2
   - go get -v -t ./...
   - mkdir -p $HOME/gopath/bin
   - go install
@@ -10,6 +11,7 @@ script:
   - go test ./... && scripts/generate-pkgs
 env:
   global:
+    - PKG_CONFIG_PATH=/tmp/libgit2-0.21.0/lib/pkgconfig
     - secure: "atByW9YBuj/QUIxp0UtIM3hrvHN2mxReTs08VCIbeQCulct8FVU+/MRKTDAsP9gGT1jbKj7EXn77EoWWZBChOUhLK3Nl87UZEN78wDejkG1/vvMDwAcLmRXgAbEoJ0Zqzf/4kspdh3w7jb97TS+5Zf/PSlc7tvl2SUASvnz/jYE="
     - secure: "EQH4LDyIFla+HcoLw7jLyRjk3WK4Nnp2QFxk/T5KScaVTW5f4kzfgkko2twSqxC8gIZS6k05fnaRnOFBXQ1wOWHuttguejXK2KOv5pYYICHg48a6feisdpYpRmwz9ral6PH43X4kNRxxShbMWZMAbmQRZ5trHfQXSh+H1ZMY4wU="
     - secure: "aiym0bgK1A6dQ34E0ws9v761nJfSgjEgVnK7oLn5juffa+EiWruXz8E9gdRphJd59t44PeKglIMtwApptpPpvS5eZxxibeezm9PAdAs1MxJd3h8GQs7OR54HSzOBkw1+Kj6H+lgFyocbfhyyFNir7yQlK/ZChzT8+Kgord3B4aQ="

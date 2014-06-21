@@ -8,7 +8,9 @@ if [ -f /etc/redhat-release ]; then
 elif [ -f /etc/debian_version ]; then
     # Ooh, this is nasty
     # Manually pre-install dependencies
-    sudo apt-get install adduser python python-decoratortools rpm usermode python-iniparse \
+    sudo apt-get -o Acquire::ForceIPv4=true \
+        install \
+        adduser python python-decoratortools rpm usermode python-iniparse \
         python-libxml2 python-rpm python-sqlite python-sqlitecachec python-urlgrabber \
         pandoc python-pip
     # ... and now install mock from lucid (winces)
