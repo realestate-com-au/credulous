@@ -7,6 +7,8 @@
 
 set -ex
 
+[ -z "$TRAVIS_BUILD_DIR" ] && TRAVIS_BUILD_DIR=$(pwd)
+
 if [ -f /etc/redhat-release ]; then
     sudo yum install -y cmake openssl http-parser zlib
     SUFFIX="rhel"
@@ -29,7 +31,7 @@ wget "$SOURCE"
 tar xvf $TARBALL
 
 cd libgit2-${LIBGIT2_VERSION}
-mkdir build && cd build
+rm -rf build && mkdir build && cd build
 cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
 cmake --build .
 cmake --build . --target install
