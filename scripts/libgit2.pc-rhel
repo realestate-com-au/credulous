@@ -6,5 +6,5 @@ Description: The git library, take 2
 Version: 0.21.0
 Requires.private:  openssl zlib
 Libs.private:  -lhttp_parser -lrt
-Libs: -L${libdir} -lgit2 -lcrypto -lssl -lz -lhttp_parser -lrt
+Libs: -L${libdir} -lgit2 -lcrypto -lssl -lrt
 Cflags: -I${includedir}

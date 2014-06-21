@@ -11,7 +11,7 @@ License:	MIT
 URL:		https://github.com/realestate-com-au/credulous
 Source0:	credulous-%{version}.tar.gz
 
-BuildRequires:	golang, mercurial, bzr, git, pandoc
+BuildRequires:	golang, mercurial, bzr, git, pandoc, wget, cmake, openssl-devel
 Requires:	bash-completion, zlib, openssl, http-parser
 
 %description
@@ -22,7 +22,24 @@ them in an encrypted local repository.
 %setup -n src/github.com/realestate-com-au/credulous
 
 %build
-scripts/build_latest_libgit2
+LIBGIT2_VERSION="0.21.0"
+TARBALL="v${LIBGIT2_VERSION}.tar.gz"
+SOURCE="https://github.com/libgit2/libgit2/archive/${TARBALL}"
+
+INSTALLDIR=/tmp/libgit2-${LIBGIT2_VERSION}
+pushd /tmp
+wget "$SOURCE"
+tar xvf $TARBALL
+
+cd libgit2-${LIBGIT2_VERSION}
+rm -rf build && mkdir build && cd build
+cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
+cmake --build .
+make install
+
+popd
+cp scripts/libgit2.pc-rhel \
+    $INSTALLDIR/lib/pkgconfig/libgit2.pc
 export PKG_CONFIG_PATH=/tmp/libgit2-0.21.0/lib/pkgconfig
 export GOPATH=$RPM_BUILD_DIR
 go get -t
