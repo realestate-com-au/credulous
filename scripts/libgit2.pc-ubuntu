@@ -1,0 +1,10 @@
+libdir=/tmp/libgit2-0.21.0/lib
+includedir=/tmp/libgit2-0.21.0/include
+
+Name: libgit2
+Description: The git library, take 2
+Version: 0.21.0
+Requires.private:  openssl zlib
+Libs.private:  -lhttp_parser -lrt
+Libs: -L${libdir} -lgit2 -lcrypto -lssl -lz -lrt
+Cflags: -I${includedir}

@@ -9,9 +9,11 @@ set -ex
 
 if [ -f /etc/redhat-release ]; then
     sudo yum install -y cmake openssl http-parser zlib
+    SUFFIX="rhel"
 elif [ -f /etc/debian_version ]; then
     echo "precedence ::ffff:0:0/96  100" | sudo tee /etc/gai.conf
     # sudo apt-get install -y cmake openssl zlib1g
+    SUFFIX="ubuntu"
 else
     echo "I can't build on this OS (yet) -- how about a pull request?"
     exit 1
@@ -32,4 +34,5 @@ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
 cmake --build .
 cmake --build . --target install
 
-cp $TRAVIS_BUILD_DIR/scripts/libgit2.pc $INSTALLDIR/lib/pkgconfig
+cp $TRAVIS_BUILD_DIR/scripts/libgit2.pc-$SUFFIX \
+    $INSTALLDIR/lib/pkgconfig/libgit2.pc
