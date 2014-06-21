@@ -406,3 +406,7 @@ func main() {
 
 	app.Run(os.Args)
 }
+
+func rotate(cred Credential) (err error) {
+	return nil
+}
