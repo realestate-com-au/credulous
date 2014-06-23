@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ -f /usr/local/etc/bash_completion.d ]; then
+	cp /tmp/credulous.bash_completion /usr/local/etc/bash_completion.d/credulous
+else
+	echo "You need to install bash-completion via homebrew in order to get"
+	echo "bash completion for credulous. Once you've done so, re-install"
+	echo "the credulous package to get the completer installed"
+fi
+
+echo "Finished at `date`" > /tmp/time_finished.txt

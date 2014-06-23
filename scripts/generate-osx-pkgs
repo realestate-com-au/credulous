@@ -1,3 +1,66 @@
-#!/bin/bash
+#!/bin/bash +ex
 
-echo "Nothing here yet..."
+PACKAGER=/usr/bin/pkgbuild
+BUILDER=/usr/bin/productbuild
+
+if [ ! -f $PACKAGER ]; then
+  echo "You need 'pkgbuild' binary to create os-x installer packages"
+  exit 1
+fi
+
+if [ ! -f $BUILDER ]; then
+  echo "You need 'productbuild' binary to create os-x installer packages"
+  exit 1
+fi
+
+SOURCE="$( dirname $0 )/.."
+NAME="credulous"
+VERSION=$( cat VERSION )
+IDENTIFIER="com.realestate-com-au.${NAME}"
+RELEASE=1
+NVR="$NAME-$VERSION-$RELEASE"
+DESTINATION="/"
+TMP_PKG_PATH="/tmp/credulous"
+TEMP_ARTIFACT="$TMP_PKG_PATH/credulous.pkg"
+ARTIFACT="$SOURCE/${NVR}.pkg"
+DIST_FILE="/tmp/os-x-distribution.xml"
+DIST_TEMPLATE="$SOURCE/osx-pkg/osx-distribution-template.xml"
+RESOURCES="$SOURCE/osx-pkg/resources"
+SCRIPTS="$SOURCE/osx-pkg/scripts"
+
+TMPROOT=$( mktemp -d -t pkg )
+mkdir -p $TMPROOT/usr/bin \
+	$TMPROOT/etc/profile.d \
+	$TMPROOT/tmp # In case homebrew's bash-completion is installed
+
+cp credulous $TMPROOT/usr/bin
+cp bash/credulous.bash_completion $TMPROOT/tmp
+cp bash/credulous.sh $TMPROOT/etc/profile.d
+
+echo "Removing old artifact $ARTIFACT"
+rm -f $ARTIFACT
+
+cp $DIST_TEMPLATE $DIST_FILE
+
+sed -i.bak -e s/IDENTIFIER/$IDENTIFIER/g $DIST_FILE
+sed -i.bak -e s/NVR/$NVR/g $DIST_FILE
+sed -i.bak -e s/ARTIFACT/"$NAME.pkg"/g $DIST_FILE
+
+mkdir -p $TMP_PKG_PATH
+
+$PACKAGER --root $TMPROOT \
+  --identifier $IDENTIFIER \
+  --scripts $SCRIPTS \
+  --version $NVR \
+  --filter ".DS_Store" --filter ".git" --filter "swp" \
+  --filter "os-x" --filter "osx" \
+  --filter "debian" --filter "rpm" --filter "brew" \
+  --install-location $DESTINATION $TEMP_ARTIFACT
+
+$BUILDER --distribution $DIST_FILE \
+  --resources $RESOURCES \
+  --package-path $TMP_PKG_PATH $ARTIFACT
+
+rm $DIST_FILE
+rm $TEMP_ARTIFACT
+rm -rf $TMPROOT
