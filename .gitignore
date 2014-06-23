@@ -13,3 +13,4 @@ pkg/
 *.spec
 .vagrant/
 s3/
+*.pkg
