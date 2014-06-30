@@ -12,16 +12,19 @@ import (
 )
 
 func TestGitAdd(t *testing.T) {
+
+	repopath := path.Join("testrepo." + fmt.Sprintf("%d", os.Getpid()))
+
+	// need to create a new repo first
+	repo, err := git.InitRepository(repopath, false)
+	panic_the_err(err)
+	defer os.RemoveAll(path.Clean(path.Join(repo.Path(), "..")))
+
 	Convey("Testing gitAdd", t, func() {
 		Convey("Test add to non-existent repository", func() {
 			_, err := gitAddCommitFile("/no/such/repo", "testdata/newcreds.json", "message")
 			So(err, ShouldNotEqual, nil)
 		})
-
-		// need to create a new repo first
-		repopath := path.Join("testrepo." + fmt.Sprintf("%d", os.Getpid()))
-		repo, err := git.InitRepository(repopath, false)
-		panic_the_err(err)
 
 		Convey("Test add non-existent file to a repo", func() {
 			_, err := gitAddCommitFile(repo.Path(), "/no/such/file", "message")
@@ -55,8 +58,6 @@ func TestGitAdd(t *testing.T) {
 			So(err, ShouldEqual, nil)
 			So(isrepo, ShouldEqual, true)
 		})
-
-		os.RemoveAll(path.Clean(path.Join(repo.Path(), "..")))
 
 	})
 }
