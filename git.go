@@ -12,7 +12,7 @@ type RepoConfig struct {
 	Email string
 }
 
-func isRepo(checkpath string) (bool, error) {
+func isGitRepo(checkpath string) (bool, error) {
 	ceiling := []string{checkpath}
 
 	repopath, err := git.Discover(checkpath, false, ceiling)
@@ -91,9 +91,31 @@ func gitAddCommitFile(repopath, filename, message string) (commitId string, err 
 		return "", err
 	}
 
-	commit, err := repo.CreateCommit("HEAD", sig, sig, message, tree)
+	var commit *git.Oid
+	haslog, err := repo.HasLog("HEAD")
 	if err != nil {
 		return "", err
+	}
+	if !haslog {
+		// In this case, the repo has been initialized, but nothing has ever been committed
+		commit, err = repo.CreateCommit("HEAD", sig, sig, message, tree)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		// In this case, the repo has commits
+		currentBranch, err := repo.Head()
+		if err != nil {
+			return "", err
+		}
+		currentTip, err := repo.LookupCommit(currentBranch.Target())
+		if err != nil {
+			return "", err
+		}
+		commit, err = repo.CreateCommit("HEAD", sig, sig, message, tree, currentTip)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return commit.String(), nil

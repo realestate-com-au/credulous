@@ -192,15 +192,35 @@ func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 	return creds, nil
 }
 
-func (cred Credentials) WriteToDisk(filename string) (err error) {
+func (cred Credentials) WriteToDisk(repo, filename string) (err error) {
+	fmt.Println("Writing creds to " + filename + " in " + repo)
 	b, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(getRootPath(), "local", cred.AccountAliasOrId, cred.IamUsername)
+	path := filepath.Join(repo, cred.AccountAliasOrId, cred.IamUsername)
+	fmt.Println("making dir " + path)
 	os.MkdirAll(path, 0700)
 	err = ioutil.WriteFile(filepath.Join(path, filename), b, 0600)
-	return err
+	if err != nil {
+		return err
+	}
+	isrepo, err := isGitRepo(repo)
+	if err != nil {
+		return err
+	}
+	if !isrepo {
+		return nil
+	}
+	fmt.Println("It is a repo")
+	relpath := filepath.Join(cred.AccountAliasOrId, cred.IamUsername, filename)
+	fmt.Println("relpath is " + relpath)
+	commit, err := gitAddCommitFile(repo, relpath, "Added by Credulous")
+	if err != nil {
+		return err
+	}
+	fmt.Println("Added to repo with commit " + commit)
+	return nil
 }
 
 func (cred OldCredential) Display(output io.Writer) {
@@ -352,7 +372,7 @@ func (cred *Credential) rotateCredentials(username string) (err error) {
 	return nil
 }
 
-func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, lifetime int, force bool) (err error) {
+func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, lifetime int, force bool, repo string) (err error) {
 
 	var key_create_date int64
 
@@ -409,8 +429,8 @@ func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.Publ
 		LifeTime:         lifetime,
 	}
 
-	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))
-	return nil
+	err = creds.WriteToDisk(repo, fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))
+	return err
 }
 
 func getRootPath() string {

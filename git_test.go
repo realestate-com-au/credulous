@@ -29,11 +29,21 @@ func TestGitAdd(t *testing.T) {
 			So(err, ShouldNotEqual, nil)
 		})
 
-		Convey("Test add a file to the repo", func() {
+		Convey("Test add an initial file to the repo", func() {
 			fp, _ := os.Create(path.Join(repopath, "testfile"))
 			_, _ = fp.WriteString("A test string")
 			_ = fp.Close()
-			commitId, err := gitAddCommitFile(repo.Path(), "testfile", "message")
+			commitId, err := gitAddCommitFile(repo.Path(), "testfile", "first commit")
+			So(err, ShouldEqual, nil)
+			So(commitId, ShouldNotEqual, nil)
+			So(commitId, ShouldNotBeBlank)
+		})
+
+		Convey("Test add a second file to the repo", func() {
+			fp, _ := os.Create(path.Join(repopath, "testfile"))
+			_, _ = fp.WriteString("A second test string")
+			_ = fp.Close()
+			commitId, err := gitAddCommitFile(repo.Path(), "testfile", "second commit")
 			So(err, ShouldEqual, nil)
 			So(commitId, ShouldNotEqual, nil)
 			So(commitId, ShouldNotBeBlank)
@@ -41,12 +51,12 @@ func TestGitAdd(t *testing.T) {
 
 		Convey("Test checking whether a repo is a repo", func() {
 			fullpath, _ := filepath.Abs(repopath)
-			isrepo, err := isRepo(fullpath)
+			isrepo, err := isGitRepo(fullpath)
 			So(err, ShouldEqual, nil)
 			So(isrepo, ShouldEqual, true)
 		})
 
-		// os.RemoveAll(path.Clean(path.Join(repo.Path(), "..")))
+		os.RemoveAll(path.Clean(path.Join(repo.Path(), "..")))
 
 	})
 }
