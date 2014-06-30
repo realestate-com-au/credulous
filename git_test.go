@@ -20,6 +20,11 @@ func TestGitAdd(t *testing.T) {
 	panic_the_err(err)
 	defer os.RemoveAll(path.Clean(path.Join(repo.Path(), "..")))
 
+	// Need to add some basic config so that tests will pass
+	config, _ := repo.Config()
+	_ = config.SetString("user.name", "Test User")
+	_ = config.SetString("user.email", "test.user@nowhere")
+
 	Convey("Testing gitAdd", t, func() {
 		Convey("Test add to non-existent repository", func() {
 			_, err := gitAddCommitFile("/no/such/repo", "testdata/newcreds.json", "message")
