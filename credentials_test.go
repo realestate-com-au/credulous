@@ -26,6 +26,10 @@ func (t *TestFileList) Readdir(n int) ([]os.FileInfo, error) {
 	return t.testList, nil
 }
 
+func (t *TestFileList) Name() string {
+	return "foo"
+}
+
 type TestFileInfo struct {
 	isDir bool
 	name  string
