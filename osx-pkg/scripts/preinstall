@@ -1,0 +1,5 @@
+#!/bin/bash
+
+GO=https://go.googlecode.com/files/go1.2.1.darwin-amd64-osx10.8.pkg
+BZR=https://launchpad.net/bzr/2.6/2.6.0/+download/Bazaar-2.6.0-OSX-10.6-2.dmg
+GIT=http://downloads.sourceforge.net/project/git-osx-installer/git-1.9.2-intel-universal-snow-leopard.dmg?r=&ts=1400407606&use_mirror=aarnet

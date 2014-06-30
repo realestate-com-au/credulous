@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -192,15 +193,30 @@ func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 	return creds, nil
 }
 
-func (cred Credentials) WriteToDisk(filename string) (err error) {
+func (cred Credentials) WriteToDisk(repo, filename string) (err error) {
 	b, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(getRootPath(), "local", cred.AccountAliasOrId, cred.IamUsername)
+	path := filepath.Join(repo, cred.AccountAliasOrId, cred.IamUsername)
 	os.MkdirAll(path, 0700)
 	err = ioutil.WriteFile(filepath.Join(path, filename), b, 0600)
-	return err
+	if err != nil {
+		return err
+	}
+	isrepo, err := isGitRepo(repo)
+	if err != nil {
+		return err
+	}
+	if !isrepo {
+		return nil
+	}
+	relpath := filepath.Join(cred.AccountAliasOrId, cred.IamUsername, filename)
+	_, err = gitAddCommitFile(repo, relpath, "Added by Credulous")
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (cred OldCredential) Display(output io.Writer) {
@@ -352,7 +368,7 @@ func (cred *Credential) rotateCredentials(username string) (err error) {
 	return nil
 }
 
-func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, lifetime int, force bool) (err error) {
+func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, lifetime int, force bool, repo string) (err error) {
 
 	var key_create_date int64
 
@@ -409,19 +425,13 @@ func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.Publ
 		LifeTime:         lifetime,
 	}
 
-	creds.WriteToDisk(fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))
-	return nil
-}
-
-func getRootPath() string {
-	home := os.Getenv("HOME")
-	rootPath := home + "/.credulous"
-	os.MkdirAll(rootPath, 0700)
-	return rootPath
+	err = creds.WriteToDisk(repo, fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))
+	return err
 }
 
 type FileLister interface {
 	Readdir(int) ([]os.FileInfo, error)
+	Name() string
 }
 
 func getDirs(fl FileLister) ([]os.FileInfo, error) {
@@ -473,8 +483,7 @@ func (cred Credentials) ValidateCredentials(alias string, username string) error
 	return nil
 }
 
-func RetrieveCredentials(alias string, username string, keyfile string) (Credentials, error) {
-	rootPath := filepath.Join(getRootPath(), "local")
+func RetrieveCredentials(rootPath string, alias string, username string, keyfile string) (Credentials, error) {
 	rootDir, err := os.Open(rootPath)
 	if err != nil {
 		panic_the_err(err)
@@ -514,48 +523,59 @@ func latestFileInDir(dir string) os.FileInfo {
 }
 
 func listAvailableCredentials(rootDir FileLister) ([]string, error) {
-	var creds []string
+	creds := make(map[string]int)
 
 	repo_dirs, err := getDirs(rootDir) // get just the directories
 	if err != nil {
-		return creds, err
+		return []string{}, err
 	}
 
 	if len(repo_dirs) == 0 {
-		return creds, errors.New("No saved credentials found; please run 'credulous save' first")
+		return []string{}, errors.New("No saved credentials found; please run 'credulous save' first")
 	}
 
 	for _, repo_dirent := range repo_dirs {
-		repo_path := filepath.Join(getRootPath(), repo_dirent.Name())
+		repo_path := filepath.Join(rootDir.Name(), repo_dirent.Name())
 		repo_dir, err := os.Open(repo_path)
 		if err != nil {
-			return creds, err
+			return []string{}, err
 		}
 
 		alias_dirs, err := getDirs(repo_dir)
 		if err != nil {
-			return creds, err
+			return []string{}, err
 		}
 
 		for _, alias_dirent := range alias_dirs {
+			if alias_dirent.Name() == ".git" {
+				continue
+			}
 			alias_path := filepath.Join(repo_path, alias_dirent.Name())
 			alias_dir, err := os.Open(alias_path)
 			if err != nil {
-				return creds, err
+				return []string{}, err
 			}
 
 			user_dirs, err := getDirs(alias_dir)
 			if err != nil {
-				return creds, err
+				return []string{}, err
 			}
 
 			for _, user_dirent := range user_dirs {
 				user_path := filepath.Join(alias_path, user_dirent.Name())
 				if latest := latestFileInDir(user_path); latest.Name() != "" {
-					creds = append(creds, user_dirent.Name()+"@"+alias_dirent.Name())
+					creds[user_dirent.Name()+"@"+alias_dirent.Name()] += 1
 				}
 			}
 		}
 	}
-	return creds, nil
+
+	names := make([]string, len(creds))
+	i := 0
+	for k, _ := range creds {
+		names[i] = k
+		i++
+	}
+	sort.Strings(names)
+	return names, nil
 }

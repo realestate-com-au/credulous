@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -182,25 +183,40 @@ func parseLifetimeArgs(c *cli.Context) (lifetime int, err error) {
 	return c.Int("lifetime"), nil
 }
 
-func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkeys []ssh.PublicKey, lifetime int, err error) {
+func parseRepoArgs(c *cli.Context) (repo string, err error) {
+	// the default is 'local' which is set below, so not much to do here
+	if c.String("repo") == "local" {
+		repo = path.Join(getRootPath(), "local")
+	} else {
+		repo = c.String("repo")
+	}
+	return repo, nil
+}
+
+func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, pubkeys []ssh.PublicKey, lifetime int, repo string, err error) {
 	pubkeys, err = parseKeyArgs(c)
 	if err != nil {
-		return Credential{}, "", "", nil, 0, err
+		return Credential{}, "", "", nil, 0, "", err
 	}
 
 	username, account, err = parseUserAndAccount(c)
 	if err != nil {
-		return Credential{}, "", "", nil, 0, err
+		return Credential{}, "", "", nil, 0, "", err
 	}
 
 	envmap, err := parseEnvironmentArgs(c)
 	if err != nil {
-		return Credential{}, "", "", nil, 0, err
+		return Credential{}, "", "", nil, 0, "", err
 	}
 
 	lifetime, err = parseLifetimeArgs(c)
 	if err != nil {
-		return Credential{}, "", "", nil, 0, err
+		return Credential{}, "", "", nil, 0, "", err
+	}
+
+	repo, err = parseRepoArgs(c)
+	if err != nil {
+		return Credential{}, "", "", nil, 0, "", err
 	}
 
 	AWSAccessKeyId := os.Getenv("AWS_ACCESS_KEY_ID")
@@ -208,7 +224,7 @@ func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, p
 	if AWSAccessKeyId == "" || AWSSecretAccessKey == "" {
 		err := errors.New("Can't save, no credentials in the environment")
 		if err != nil {
-			return Credential{}, "", "", nil, 0, err
+			return Credential{}, "", "", nil, 0, "", err
 		}
 	}
 	cred = Credential{
@@ -217,7 +233,7 @@ func parseSaveArgs(c *cli.Context) (cred Credential, username, account string, p
 		EnvVars:   envmap,
 	}
 
-	return cred, username, account, pubkeys, lifetime, nil
+	return cred, username, account, pubkeys, lifetime, repo, nil
 }
 
 func main() {
@@ -261,11 +277,16 @@ func main() {
 					Value: "",
 					Usage: "\n        Account alias (for use with '--force')",
 				},
+				cli.StringFlag{
+					Name:  "repo, r",
+					Value: "local",
+					Usage: "\n        Repository location ('local' by default)",
+				},
 			},
 			Action: func(c *cli.Context) {
-				cred, username, account, pubkeys, lifetime, err := parseSaveArgs(c)
+				cred, username, account, pubkeys, lifetime, repo, err := parseSaveArgs(c)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"))
+				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"), repo)
 				panic_the_err(err)
 			},
 		},
@@ -298,6 +319,11 @@ func main() {
 					Name:  "force, f",
 					Usage: "\n        Force sourcing of credentials without validating username or account",
 				},
+				cli.StringFlag{
+					Name:  "repo, r",
+					Value: "local",
+					Usage: "\n        Repository location ('local' by default)",
+				},
 			},
 			Action: func(c *cli.Context) {
 				keyfile := getPrivateKey(c)
@@ -305,7 +331,11 @@ func main() {
 				if err != nil {
 					panic_the_err(err)
 				}
-				creds, err := RetrieveCredentials(account, username, keyfile)
+				repo, err := parseRepoArgs(c)
+				if err != nil {
+					panic_the_err(err)
+				}
+				creds, err := RetrieveCredentials(repo, account, username, keyfile)
 				if err != nil {
 					panic_the_err(err)
 				}
@@ -390,15 +420,20 @@ func main() {
 					Value: &cli.StringSlice{},
 					Usage: "\n        Environment variables to set in the form VAR=value",
 				},
+				cli.StringFlag{
+					Name:  "repo, r",
+					Value: "local",
+					Usage: "\n        Repository location ('local' by default)",
+				},
 			},
 			Action: func(c *cli.Context) {
-				cred, _, _, pubkeys, lifetime, err := parseSaveArgs(c)
+				cred, _, _, pubkeys, lifetime, repo, err := parseSaveArgs(c)
 				panic_the_err(err)
 				username, account, err := getAWSUsernameAndAlias(cred)
 				panic_the_err(err)
 				err = (&cred).rotateCredentials(username)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"))
+				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"), repo)
 				panic_the_err(err)
 			},
 		},

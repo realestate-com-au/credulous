@@ -1,3 +1,4 @@
+.DS_Store
 tags
 credulous
 *.rpm
@@ -13,3 +14,4 @@ pkg/
 *.spec
 .vagrant/
 s3/
+*.pkg
