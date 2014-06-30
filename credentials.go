@@ -193,13 +193,11 @@ func readCredentialFile(fileName string, keyfile string) (*Credentials, error) {
 }
 
 func (cred Credentials) WriteToDisk(repo, filename string) (err error) {
-	fmt.Println("Writing creds to " + filename + " in " + repo)
 	b, err := json.Marshal(cred)
 	if err != nil {
 		return err
 	}
 	path := filepath.Join(repo, cred.AccountAliasOrId, cred.IamUsername)
-	fmt.Println("making dir " + path)
 	os.MkdirAll(path, 0700)
 	err = ioutil.WriteFile(filepath.Join(path, filename), b, 0600)
 	if err != nil {
@@ -212,14 +210,11 @@ func (cred Credentials) WriteToDisk(repo, filename string) (err error) {
 	if !isrepo {
 		return nil
 	}
-	fmt.Println("It is a repo")
 	relpath := filepath.Join(cred.AccountAliasOrId, cred.IamUsername, filename)
-	fmt.Println("relpath is " + relpath)
-	commit, err := gitAddCommitFile(repo, relpath, "Added by Credulous")
+	_, err := gitAddCommitFile(repo, relpath, "Added by Credulous")
 	if err != nil {
 		return err
 	}
-	fmt.Println("Added to repo with commit " + commit)
 	return nil
 }
 
