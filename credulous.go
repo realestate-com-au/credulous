@@ -319,6 +319,11 @@ func main() {
 					Name:  "force, f",
 					Usage: "\n        Force sourcing of credentials without validating username or account",
 				},
+				cli.StringFlag{
+					Name:  "repo, r",
+					Value: "local",
+					Usage: "\n        Repository location ('local' by default)",
+				},
 			},
 			Action: func(c *cli.Context) {
 				keyfile := getPrivateKey(c)
@@ -326,7 +331,11 @@ func main() {
 				if err != nil {
 					panic_the_err(err)
 				}
-				creds, err := RetrieveCredentials(account, username, keyfile)
+				repo, err := parseRepoArgs(c)
+				if err != nil {
+					panic_the_err(err)
+				}
+				creds, err := RetrieveCredentials(repo, account, username, keyfile)
 				if err != nil {
 					panic_the_err(err)
 				}

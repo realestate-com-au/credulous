@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"os"
 	"fmt"
+	"os"
 )
 
 func panic_the_err(err error) {
@@ -20,4 +20,11 @@ func ensure_directory(path string) {
 
 	err := os.MkdirAll(path, 0755)
 	panic_the_err(err)
+}
+
+func getRootPath() string {
+	home := os.Getenv("HOME")
+	rootPath := home + "/.credulous"
+	os.MkdirAll(rootPath, 0700)
+	return rootPath
 }
