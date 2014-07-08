@@ -64,5 +64,11 @@ func TestGitAdd(t *testing.T) {
 			So(isrepo, ShouldEqual, true)
 		})
 
+		Convey("Test checking whether a plain dir is a repo", func() {
+			isrepo, err := isGitRepo("/tmp")
+			So(err, ShouldEqual, nil)
+			So(isrepo, ShouldEqual, false)
+		})
+
 	})
 }
