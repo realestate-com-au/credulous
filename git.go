@@ -21,7 +21,7 @@ func isGitRepo(checkpath string) (bool, error) {
 	if err != nil && err.Error() != nonRepoErr.Error() {
 		return false, err
 	}
-	if err.Error() == nonRepoErr.Error() {
+	if err != nil && err.Error() == nonRepoErr.Error() {
 		return false, nil
 	}
 	// the path is the parent of the repo, which appends '.git'
