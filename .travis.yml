@@ -3,8 +3,7 @@ go:
   - 1.2
 install:
   - scripts/build_latest_libgit2
-  - export PKG_CONFIG_PATH=/tmp/libgit2-0.21.0/lib/pkgconfig
-  - go get -v -t ./...
+  - export PKG_CONFIG_PATH=/tmp/libgit2-0.21.0/lib/pkgconfig && go get -v -t ./...
   - mkdir -p $HOME/gopath/bin
   - go install
 script:
