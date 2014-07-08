@@ -60,6 +60,17 @@ type OldCredential struct {
 	FingerPrint      string
 }
 
+type SaveData struct {
+	cred     Credential
+	username string
+	alias    string
+	pubkeys  []ssh.PublicKey
+	lifetime int
+	force    bool
+	repo     string
+	isRepo   bool
+}
+
 func decodeOldCredential(data []byte, keyfile string) (*OldCredential, error) {
 	var credential OldCredential
 	err := json.Unmarshal(data, &credential)
@@ -368,23 +379,23 @@ func (cred *Credential) rotateCredentials(username string) (err error) {
 	return nil
 }
 
-func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.PublicKey, lifetime int, force bool, repo string) (err error) {
+func SaveCredentials(data SaveData) (err error) {
 
 	var key_create_date int64
 
-	if force {
+	if data.force {
 		key_create_date = time.Now().Unix()
 	} else {
-		auth := aws.Auth{AccessKey: cred.KeyId, SecretKey: cred.SecretKey}
+		auth := aws.Auth{AccessKey: data.cred.KeyId, SecretKey: data.cred.SecretKey}
 		instance := iam.New(auth, aws.APSoutheast2)
-		if username == "" {
-			username, err = getAWSUsername(instance)
+		if data.username == "" {
+			data.username, err = getAWSUsername(instance)
 			if err != nil {
 				return err
 			}
 		}
-		if alias == "" {
-			alias, err = getAWSAccountAlias(instance)
+		if data.alias == "" {
+			data.alias, err = getAWSAccountAlias(instance)
 			if err != nil {
 				return err
 			}
@@ -398,14 +409,14 @@ func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.Publ
 		}
 	}
 
-	fmt.Printf("saving credentials for %s@%s\n", username, alias)
-	plaintext, err := json.Marshal(cred)
+	fmt.Printf("saving credentials for %s@%s\n", data.username, data.alias)
+	plaintext, err := json.Marshal(data.cred)
 	if err != nil {
 		return err
 	}
 
 	enc_slice := []Encryption{}
-	for _, pubkey := range pubkeys {
+	for _, pubkey := range data.pubkeys {
 		encoded, err := CredulousEncode(string(plaintext), pubkey)
 		if err != nil {
 			return err
@@ -418,14 +429,15 @@ func SaveCredentials(cred Credential, username, alias string, pubkeys []ssh.Publ
 	}
 	creds := Credentials{
 		Version:          FORMAT_VERSION,
-		AccountAliasOrId: alias,
-		IamUsername:      username,
+		AccountAliasOrId: data.alias,
+		IamUsername:      data.username,
 		CreateTime:       fmt.Sprintf("%d", key_create_date),
 		Encryptions:      enc_slice,
-		LifeTime:         lifetime,
+		LifeTime:         data.lifetime,
 	}
 
-	err = creds.WriteToDisk(repo, fmt.Sprintf("%v-%v.json", key_create_date, cred.KeyId[12:]))
+	filename := fmt.Sprintf("%v-%v.json", key_create_date, data.cred.KeyId[12:])
+	err = creds.WriteToDisk(data.repo, filename)
 	return err
 }
 

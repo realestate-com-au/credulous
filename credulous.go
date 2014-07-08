@@ -286,7 +286,15 @@ func main() {
 			Action: func(c *cli.Context) {
 				cred, username, account, pubkeys, lifetime, repo, err := parseSaveArgs(c)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"), repo)
+				err = SaveCredentials(SaveData{
+					cred:     cred,
+					username: username,
+					alias:    account,
+					pubkeys:  pubkeys,
+					lifetime: lifetime,
+					force:    c.Bool("force"),
+					repo:     repo,
+				})
 				panic_the_err(err)
 			},
 		},
@@ -433,7 +441,15 @@ func main() {
 				panic_the_err(err)
 				err = (&cred).rotateCredentials(username)
 				panic_the_err(err)
-				err = SaveCredentials(cred, username, account, pubkeys, lifetime, c.Bool("force"), repo)
+				err = SaveCredentials(SaveData{
+					cred:     cred,
+					username: username,
+					alias:    account,
+					pubkeys:  pubkeys,
+					lifetime: lifetime,
+					force:    c.Bool("force"),
+					repo:     repo,
+				})
 				panic_the_err(err)
 			},
 		},
