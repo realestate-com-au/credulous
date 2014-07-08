@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"path"
 	"time"
 
@@ -16,8 +17,12 @@ func isGitRepo(checkpath string) (bool, error) {
 	ceiling := []string{checkpath}
 
 	repopath, err := git.Discover(checkpath, false, ceiling)
-	if err != nil {
+	nonRepoErr := errors.New("Could not find repository from '" + checkpath + "'")
+	if err != nil && err.Error() != nonRepoErr.Error() {
 		return false, err
+	}
+	if err.Error() == nonRepoErr.Error() {
+		return false, nil
 	}
 	// the path is the parent of the repo, which appends '.git'
 	// to the path
