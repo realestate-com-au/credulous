@@ -22,27 +22,16 @@ them in an encrypted local repository.
 %setup -n src/github.com/realestate-com-au/credulous
 
 %build
-LIBGIT2_VERSION="0.21.0"
-TARBALL="v${LIBGIT2_VERSION}.tar.gz"
-SOURCE="https://github.com/libgit2/libgit2/archive/${TARBALL}"
-
-INSTALLDIR=/tmp/libgit2-${LIBGIT2_VERSION}
-pushd /tmp
-wget "$SOURCE"
-tar xvf $TARBALL
-
-cd libgit2-${LIBGIT2_VERSION}
-rm -rf build && mkdir build && cd build
-cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
-cmake --build .
+export GOPATH=$RPM_BUILD_DIR
+mkdir -p $GOPATH/src/github.com/libgit2
+pushd $GOPATH/src/github.com/libgit2
+git clone https://github.com/libgit2/git2go.git
+pushd git2go
+git submodule update --init
 make install
 
-popd
-cp scripts/libgit2.pc-rhel \
-    $INSTALLDIR/lib/pkgconfig/libgit2.pc
-export PKG_CONFIG_PATH=/tmp/libgit2-0.21.0/lib/pkgconfig
-export GOPATH=$RPM_BUILD_DIR
-go get -t
+popd; popd
+go get -v -t ./...
 go test
 go build
 pandoc -s -w man doc/credulous.md -o credulous.1
