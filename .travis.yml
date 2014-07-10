@@ -2,7 +2,10 @@ language: go
 go:
   - 1.2
 install:
-  - scripts/build_latest_libgit2
+  - mkdir $HOME/gopath/src/github.com/libgit2 && cd $HOME/gopath/src/github.com/libgit2 && git clone https://github.com/libgit2/git2go.git
+  - cd git2go && git submodule update --init
+  - make install
+  - cd $TRAVIS_BUILD_DIR
   - go get -v -t ./...
   - mkdir -p $HOME/gopath/bin
   - go install
