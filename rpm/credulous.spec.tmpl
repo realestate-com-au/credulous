@@ -23,14 +23,19 @@ them in an encrypted local repository.
 
 %build
 export GOPATH=$RPM_BUILD_DIR
+export HERE=`pwd`
 mkdir -p $GOPATH/src/github.com/libgit2
-pushd $GOPATH/src/github.com/libgit2
+cd $GOPATH/src/github.com/libgit2
 git clone https://github.com/libgit2/git2go.git
-pushd git2go
+cd git2go
 git submodule update --init
-make install
+sh -x ./script/build-libgit2-static.sh
+cd vendor/libgit2/build
+make
+cd ../../..
+sh -x ./script/with-static.sh go install ./...
 
-popd; popd
+cd $HERE
 go get -v -t ./...
 go test
 go build
