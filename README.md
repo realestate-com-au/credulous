@@ -79,12 +79,23 @@ Required tools:
 * [go](http://golang.org)
 * [git](http://git-scm.com)
 * [bzr](http://bazaar.canonical.com)
+* [mercurial](http://mercurial.selenic.com)
 
 Make sure you have [GOPATH](http://golang.org/doc/code.html#GOPATH) set in your environment
 
 Download the dependencies
 
     $ go get -u # -u will update existing dependencies
+
+Install [git2go](https://github.com/libgit2/git2go) (Optional if you already have it installed correctly in your environment)
+
+    $ go get github.com/libgit2/git2go
+    $ cd $GOPATH/src/github.com/libgit2/git2go && rm -rf vendor/libgit2
+    $ git submodule update --init
+    $ mkdir -p $GOPATH/src/github.com/libgit2/git2go/vendor/libgit2/install/lib
+    $ make install
+    # Run dependency update again for credulous
+    $ cd $GOPATH/src/github.com/realestate-com-au/credulous && go get -u
 
 Install the binary in your $GOBIN
 
@@ -95,7 +106,7 @@ Install the binary in your $GOBIN
 First we make sure we have our dependencies
 
     go get -t
-    
+
 Make sure goconvey is installed, else use
 
     go get -t github.com/smartystreets/goconvey
