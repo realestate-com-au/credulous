@@ -1,10 +1,11 @@
 # Credulous
 
-**credulous** is a command line tool that manages **AWS (IAM) Credentials securely**. The aim is
-to encrypt the credentials using a user's **public SSH Key** so that only the user who has the
-corresponding **private SSH key** is able to see and use them. Furthermore the tool will also
-enable the user to **easily rotate** their current credentials without breaking the user's current
-workflow.
+**credulous** is a command line tool that manages **AWS (IAM) Credentials
+securely**. The aim is to encrypt the credentials using a user's **public
+SSH Key** so that only the user who has the corresponding **private SSH
+key** is able to see and use them. Furthermore the tool will also enable
+the user to **easily rotate** their current credentials without breaking
+the user's current workflow.
 
 ## Main Features
 
@@ -12,7 +13,8 @@ workflow.
 * Easy switching of Credentials between Accounts/Users.
 * Painless Credential rotation.
 * Enables rotation of Credentials by external application/service.
-* No external runtime dependencies beyond minimal platform-specific shared libraries
+* No external runtime dependencies beyond minimal platform-specific
+  shared libraries
 
 ## Installation
 
@@ -53,6 +55,34 @@ Debian/Ubuntu: bash-completion is installed and enabled by default. Enjoy!
 
 
 ## Usage
+
+Credentials need to have the right to inspect the account alias, 
+list access keys and examine the username of the user for whom they
+exist. An IAM policy snippet like this will grant sufficient
+permissions:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PermitViewAliases",
+            "Effect": "Allow",
+            "Action": [ "iam:ListAccountAliases" ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "PermitViewOwnDetails",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListAccessKeys",
+                "iam:GetUser"
+            ],
+            "Resource": "arn:aws:iam::*:user/${aws:username}"
+        }
+    ]
+}
+```
 
 You can have a [look at the manual
 page](https://github.com/realestate-com-au/credulous/blob/master/credulous.md), if that's your thing.
