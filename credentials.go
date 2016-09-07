@@ -519,7 +519,11 @@ func RetrieveCredentials(rootPath string, alias string, username string, keyfile
 	}
 
 	fullPath := filepath.Join(rootPath, alias, username)
-	filePath := filepath.Join(fullPath, latestFileInDir(fullPath).Name())
+	latest, err := latestFileInDir(fullPath)
+	if err != nil {
+		return Credentials{}, err
+	}
+	filePath := filepath.Join(fullPath, latest.Name())
 	cred, err := readCredentialFile(filePath, keyfile)
 	if err != nil {
 		return Credentials{}, err
@@ -528,10 +532,13 @@ func RetrieveCredentials(rootPath string, alias string, username string, keyfile
 	return *cred, nil
 }
 
-func latestFileInDir(dir string) os.FileInfo {
+func latestFileInDir(dir string) (os.FileInfo, error) {
 	entries, err := ioutil.ReadDir(dir)
 	panic_the_err(err)
-	return entries[len(entries)-1]
+	if len(entries) == 0 {
+		return nil, errors.New("No credentials have been saved for that user and account; please run 'credulous save' first")
+	}
+	return entries[len(entries)-1], nil
 }
 
 func listAvailableCredentials(rootDir FileLister) ([]string, error) {
@@ -575,7 +582,11 @@ func listAvailableCredentials(rootDir FileLister) ([]string, error) {
 
 			for _, user_dirent := range user_dirs {
 				user_path := filepath.Join(alias_path, user_dirent.Name())
-				if latest := latestFileInDir(user_path); latest.Name() != "" {
+				latest, err := latestFileInDir(user_path)
+				if err != nil {
+					return []string{}, err
+				}
+				if latest.Name() != "" {
 					creds[user_dirent.Name()+"@"+alias_dirent.Name()] += 1
 				}
 			}
