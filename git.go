@@ -5,7 +5,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/libgit2/git2go"
+  "github.com/libgit2/git2go"
+
 )
 
 type RepoConfig struct {
@@ -97,7 +98,7 @@ func gitAddCommitFile(repopath, filename, message string) (commitId string, err 
 	}
 
 	var commit *git.Oid
-	haslog, err := repo.HasLog("HEAD")
+	haslog, err := repo.References.HasLog("HEAD")
 	if err != nil {
 		return "", err
 	}
