@@ -13,9 +13,9 @@ import (
 	"regexp"
 	"strings"
 
-	"code.google.com/p/go.crypto/ssh"
+	"golang.org/x/crypto/ssh"
 
-	"code.google.com/p/gopass"
+	"github.com/howeyc/gopass"
 	"github.com/codegangsta/cli"
 )
 
@@ -28,8 +28,7 @@ func decryptPEM(pemblock *pem.Block, filename string) ([]byte, error) {
 	}
 
 	// we already emit the prompt to stderr; GetPass only emits to stdout
-	var passwd string
-	passwd, err = gopass.GetPass("")
+  passwd, err := gopass.GetPasswd()
 	fmt.Fprintln(os.Stderr, "")
 	if err != nil {
 		return []byte(""), err
