@@ -6,8 +6,8 @@ import (
 
 	"crypto/rsa"
 
-	"code.google.com/p/go.crypto/ssh"
 	. "github.com/smartystreets/goconvey/convey"
+	"golang.org/x/crypto/ssh"
 )
 
 func TestEncode(t *testing.T) {

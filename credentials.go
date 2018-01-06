@@ -16,7 +16,7 @@ import (
 	"github.com/realestate-com-au/goamz/aws"
 	"github.com/realestate-com-au/goamz/iam"
 
-	"code.google.com/p/go.crypto/ssh"
+	"golang.org/x/crypto/ssh"
 )
 
 const FORMAT_VERSION string = "2014-06-12"
